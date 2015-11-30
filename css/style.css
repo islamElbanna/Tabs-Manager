@@ -15,6 +15,10 @@ body {
 	padding: 5px;
 }
 
+.panel-heading {
+	cursor: pointer;
+}
+
 .panel-body {
     padding: 5px;
 }

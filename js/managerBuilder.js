@@ -197,6 +197,10 @@ function addEvents(){
 			$(this).click();
 		});
 	});
+
+	$(".panel-heading").bind("click", function(){
+		$(this).parent().find(".panel-body").slideToggle();
+	});
 }
 
 

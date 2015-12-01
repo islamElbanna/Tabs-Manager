@@ -66,7 +66,13 @@ function sortGroups(groups){
 	    keys.push(k);
 	  }
 	}
-	return keys.sort();
+	var sortedGroups = keys.sort();
+	if(sortedGroups["others"]){
+		var othersGroup = sortedGroups["others"];
+		delete sortedGroups["others"];
+		sortedGroups.push(othersGroup);
+	}
+	return sortedGroups;
 }
 
 function getGroupIcon(groupName, groupTabsDetails){
@@ -99,6 +105,10 @@ function buildTabs(tabsdDetails){
 		var index = 0;
   		var groupTabsDetails = tabsGroups[group];
 		var icon = getGroupIcon(group, groupTabsDetails);
+		
+		if(group == "others")
+			group = "Domains With Single Tab"
+
 		var groupSection = '<div class="panel panel-default">'+
   								'<div class="panel-heading"><img src="'+ icon +'" class="groupIcon">'+ group +
   								'<a title="Close Group" class="closeGroup"><span class="glyphicon glyphicon-remove" ></span></a>'+

@@ -62,16 +62,12 @@ function groupTabs(tabsdDetails){
 function sortGroups(groups){
 	var keys = []
 	for (k in groups) {
-	  if (groups.hasOwnProperty(k)) {
+	  if (k != "others" && groups.hasOwnProperty(k)) {
 	    keys.push(k);
 	  }
 	}
 	var sortedGroups = keys.sort();
-	if(sortedGroups["others"]){
-		var othersGroup = sortedGroups["others"];
-		delete sortedGroups["others"];
-		sortedGroups.push(othersGroup);
-	}
+	sortedGroups.push("others");
 	return sortedGroups;
 }
 
@@ -103,6 +99,10 @@ function buildTabs(tabsdDetails){
 		var group = sortedGroups[i];
 		var row = "";
 		var index = 0;
+
+		if(!tabsGroups[group])
+			continue;
+
   		var groupTabsDetails = tabsGroups[group];
 		var icon = getGroupIcon(group, groupTabsDetails);
 		

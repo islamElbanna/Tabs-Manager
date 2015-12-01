@@ -203,18 +203,7 @@ function addEvents(){
 
 	$(".closeTab").bind("click", function(tabCloseImage){
 		var id = $(this).attr("tabId");
-		chrome.runtime.sendMessage({cmd: CMD_REMOVE_TAB, tabId: id}); 
 		chrome.tabs.remove(parseInt(id));
-		var row = $("#" + id).parent();
-		$("#" + id).remove();
-		if(row.find(".item").length == 0){
-			var group = $(row).parent().parent();
-			if($(group).find(".row").length == 1){
-				$(group).remove();
-			} else{
-				$(row).remove();
-			}
-		}
 	});
 
 	$(".closeGroup").bind("click", function(){
@@ -247,6 +236,18 @@ function addGlobalEvents(){
 			$("#" + tabId).find(".zoomTab").each(function(){
 				$(this).attr("href", img);
 			});
+		}
+	  } else if (request.cmd == CMD_REMOVE_TAB){
+		var id = request.tabId;
+	  	var row = $("#" + id).parent();
+		$("#" + id).remove();
+		if(row.find(".item").length == 0){
+			var group = $(row).parent().parent();
+			if($(group).find(".row").length == 1){
+				$(group).remove();
+			} else{
+				$(row).remove();
+			}
 		}
 	  }
 	});

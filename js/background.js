@@ -113,8 +113,6 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
   if(request.cmd == CMD_RECORD_TAB_IMAGE){
     save(sender.tab.id);
     saveImage(sender.tab.id, request.image)
-  } else if(request.cmd == CMD_REMOVE_TAB){
-    remove(request.tabId);
   } else if(request.cmd == CMD_GET_TABS_DETAILS){
     var requestedIds = request.tabsIds;
     var requestedTabsDetails = {};
@@ -137,6 +135,7 @@ chrome.tabs.onActivated.addListener(function(activeInfo){
 
 chrome.tabs.onRemoved.addListener(function(tabId, removeInfo){
   remove(tabId);
+  chrome.runtime.sendMessage({cmd: CMD_REMOVE_TAB, tabId: tabId});
 });
 
 chrome.tabs.onZoomChange.addListener(function(ZoomChangeInfo){

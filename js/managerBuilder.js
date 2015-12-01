@@ -1,44 +1,125 @@
-function setScreenshotUrl(url) {
-  document.getElementById('target').src = url;
-}
+var CMD_GET_TABS_DETAILS = "getTabs"
+var CMD_REMOVE_TAB = "removeTab"
+var CMD_UPDATE_IMAGE = "updateImage"
+
+var TABS_DETAILS_IMGAGE = "img"
+var TABS_DETAILS_TITLE = "title"
+var TABS_DETAILS_ICON = "icon"
+var TABS_DETAILS_URL = "url"
+
+var IMG_NO_IMAGE = "img/no-image.png"
 
 function load(){
-	$("#addNewTab").bind("click", function(){
-		chrome.tabs.create({active: true});
-	});
+	buildWindowTabs();	
+	addGlobalEvents();
+}
 
+function buildWindowTabs(){
 	chrome.tabs.query({currentWindow: true}, function(tabs){
 		var tabsIds = [];
 		for(var i = 0; i < tabs.length; i++)
 			tabsIds[i] = tabs[i].id; 
-
-		chrome.extension.sendMessage({cmd: "getTabs", tabsIds: tabsIds}, function(tabsdDetails){
-			if(Object.keys(tabsdDetails).length == tabsIds.length){
-				loadAdvanced(tabsdDetails);
-			} else {
-				$("#indexing").show();
-				loadAdvanced(tabsdDetails);
-			}
-		});
+		retrieveTabsDetails(tabsIds);
 	});
 }
 
-function loadAdvanced(tabsdDetails){
+function retrieveTabsDetails(tabsIds){
+	chrome.extension.sendMessage({cmd: CMD_GET_TABS_DETAILS, tabsIds: tabsIds}, function(tabsdDetails){
+		if(Object.keys(tabsdDetails).length == tabsIds.length){
+			loadTabs(tabsdDetails);
+		} else {
+			$("#indexing").show();
+			loadTabs(tabsdDetails);
+		}
+	});
+} 
+
+function loadTabs(tabsdDetails){
 	var tabsList = buildTabs(tabsdDetails);	
 	document.getElementById('tabsList').innerHTML = tabsList;
 	addEvents();
+}
+
+function buildTabs(tabsdDetails){
+	var tabsGroups = groupTabs(tabsdDetails);	
+	var sortedGroups = sortGroups(tabsGroups);
+
+	var tabsList = "";
+	for(var i in sortedGroups){
+		var group = sortedGroups[i];
+		if(!tabsGroups[group])
+			continue;
+
+  		var groupTabsDetails = tabsGroups[group];
+		var groupIcon = getGroupIcon(group, groupTabsDetails);
+		
+		if(group == "others")
+			group = "Domains With Single Tab"
+
+		var groupSection = '<div class="panel panel-default">'+
+  								'<div class="panel-heading"><img src="'+ groupIcon +'" class="groupIcon">'+ group +
+  								'<a title="Close Group" class="closeGroup"><span class="glyphicon glyphicon-remove" ></span></a>'+
+  								'</div>'+
+  								'<div class="panel-body">'+
+  									buildGroupTabs(groupTabsDetails) +
+  								'</div>'+
+  							'</div>';
+  		tabsList += groupSection;
+	}
+
+    return tabsList;
+}
+
+function buildGroupTabs(groupTabsDetails){
+	var groupSection = "";
+	var row = "";
+	var tabsPerRow = 4;
+	var index = 0;
+	for (var tabId in groupTabsDetails) {
+    	var tabDetails = groupTabsDetails[tabId];
+    	if(tabDetails[TABS_DETAILS_TITLE]){
+	    	if(index == 0)
+	    		row = "<div class='row'>";
+	    	index++;
+
+	    	var img = getImage(tabDetails[TABS_DETAILS_IMGAGE]);
+	    	var title = tabDetails[TABS_DETAILS_TITLE];
+	    	var url = tabDetails[TABS_DETAILS_URL];
+	        row += '<div class="item" id="'+ tabId +'">' +
+						'<a class="thumbnailImg tab" href="#" tabId="'+ tabId +'" >'+
+							'<img src="'+ img +'" />'+
+						'</a>'+
+						'<div class="caption">'+
+							'<p>'+ title +'</p>'+
+							'<div class="controllPanel">'+
+								'<a tabId="'+ tabId +'" title="Close" class="closeTab"><span class="glyphicon glyphicon-remove" ></span></a>'+ 
+								'<a class="zoomTab" title="Zoom In" href="'+ img +'" data-lighter><span class="glyphicon glyphicon-zoom-in" ></span></a>'+
+							'</div>'+
+						'</div>'+
+					'</div>';
+			if(index + 1 > tabsPerRow){
+				index = 0;
+				groupSection += row + "</div>"; 
+			}
+		}
+    }
+
+	if(index > 0)
+	    groupSection += row + "</div>";
+
+    return groupSection;
 }
 
 function groupTabs(tabsdDetails){
 	var tabsGroups = {};
 	for (var tabId in tabsdDetails) {
 		var tabDetails = tabsdDetails[tabId];
-		if(tabsGroups[tabDetails["url"]]){
-			tabsGroups[tabDetails["url"]][tabId] = tabDetails;
+		if(tabsGroups[tabDetails[TABS_DETAILS_URL]]){
+			tabsGroups[tabDetails[TABS_DETAILS_URL]][tabId] = tabDetails;
 		} else {
 			var list = {};
 			list[tabId] = tabDetails;
-			tabsGroups[tabDetails["url"]] = list; 
+			tabsGroups[tabDetails[TABS_DETAILS_URL]] = list; 
 		}
 	}
 
@@ -75,83 +156,17 @@ function getGroupIcon(groupName, groupTabsDetails){
 	var icon = "img/other.ico";	
 	if(groupName != "others")
 		for (var tabId in groupTabsDetails)
-			if(groupTabsDetails[tabId]["icon"])
-				icon = groupTabsDetails[tabId]["icon"];
+			if(groupTabsDetails[tabId][TABS_DETAILS_ICON])
+				icon = groupTabsDetails[tabId][TABS_DETAILS_ICON];
 	return icon;
 }
 
 function getImage(img){
 	if (!img || img == "NoImage")
-		img = "img/no-image.png";
-	else if(img == "Loading")
-		img = "img/camera.png";	
+		img = IMG_NO_IMAGE;
 	return img;
 }
 
-function buildTabs(tabsdDetails){
-	var tabsGroups = groupTabs(tabsdDetails);	
-
-	var tabsList = "";
-	var tabsPerRow = (775.0 - 70.0) / 165.0;
-
-	var sortedGroups = sortGroups(tabsGroups);
-	for(var i in sortedGroups){
-		var group = sortedGroups[i];
-		var row = "";
-		var index = 0;
-
-		if(!tabsGroups[group])
-			continue;
-
-  		var groupTabsDetails = tabsGroups[group];
-		var icon = getGroupIcon(group, groupTabsDetails);
-		
-		if(group == "others")
-			group = "Domains With Single Tab"
-
-		var groupSection = '<div class="panel panel-default">'+
-  								'<div class="panel-heading"><img src="'+ icon +'" class="groupIcon">'+ group +
-  								'<a title="Close Group" class="closeGroup"><span class="glyphicon glyphicon-remove" ></span></a>'+
-  								'</div>'+
-  								'<div class="panel-body">';
-
-	  	for (var tabId in groupTabsDetails) {
-	    	var tabDetails = groupTabsDetails[tabId];
-	    	if(tabDetails["title"]){
-		    	if(index == 0)
-		    		row = "<div class='row'>";
-		    	index++;
-
-		    	var img = getImage(tabDetails["img"]);
-		    	var title = tabDetails["title"];
-		    	var url = tabDetails["url"];
-		        row += '<div class="item" id="'+ tabId +'">' +
-							'<a class="thumbnailImg tab" href="#" tabId="'+ tabId +'" >'+
-								'<img src="'+ img +'" />'+
-							'</a>'+
-							'<div class="caption">'+
-								'<p>'+ title +'</p>'+
-								'<div class="controllPanel">'+
-									'<a tabId="'+ tabId +'" title="Close" class="closeTab"><span class="glyphicon glyphicon-remove" ></span></a>'+ 
-									'<a class="zoomTab" title="Zoom In" href="'+ img +'" data-lighter><span class="glyphicon glyphicon-zoom-in" ></span></a>'+
-								'</div>'+
-							'</div>'+
-						'</div>';
-				if(index + 1 > tabsPerRow){
-					index = 0;
-					groupSection += row + "</div>"; 
-				}
-			}
-	    }
-	    if(index > 0)
-	    	groupSection += row + "</div>";
-
-  		groupSection +=	'</div></div>';
-  		tabsList += groupSection;
-	}
-
-    return tabsList;
-}
 
 function addEvents(){
 	//move the image in pixel
@@ -188,7 +203,7 @@ function addEvents(){
 
 	$(".closeTab").bind("click", function(tabCloseImage){
 		var id = $(this).attr("tabId");
-		chrome.runtime.sendMessage({cmd: "removeTab", tabId: id}); 
+		chrome.runtime.sendMessage({cmd: CMD_REMOVE_TAB, tabId: id}); 
 		chrome.tabs.remove(parseInt(id));
 		var row = $("#" + id).parent();
 		$("#" + id).remove();
@@ -213,23 +228,28 @@ function addEvents(){
 	});
 }
 
+function addGlobalEvents(){
+	$("#addNewTab").bind("click", function(){
+		chrome.tabs.create({active: true});
+	});
+
+	// Server
+	chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
+	  if(request.cmd == CMD_UPDATE_IMAGE){
+	    var tabId = request.tabId;
+	    var img = request.img;
+	    if(img && img != "NoImage"){
+			$("#" + tabId).find(".thumbnailImg").each(function(){
+				$(this).find("img").each(function(){
+					$(this).attr("src", img);
+				});
+			});
+			$("#" + tabId).find(".zoomTab").each(function(){
+				$(this).attr("href", img);
+			});
+		}
+	  }
+	});
+}
 
 load();
-
-// Server
-chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
-  if(request.cmd == "updateImage"){
-    var tabId = request.tabId;
-    var img = request.img;
-    if(img && img != "NoImage"){
-		$("#" + tabId).find(".thumbnailImg").each(function(){
-			$(this).find("img").each(function(){
-				$(this).attr("src", img);
-			});
-		});
-		$("#" + tabId).find(".zoomTab").each(function(){
-			$(this).attr("href", img);
-		});
-	}
-  }
-});

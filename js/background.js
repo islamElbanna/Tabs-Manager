@@ -1,3 +1,13 @@
+var CMD_UPDATE_IMAGE = "updateImage"
+var CMD_GET_TABS_DETAILS = "getTabs"
+var CMD_REMOVE_TAB = "removeTab"
+var CMD_RECORD_TAB_IMAGE = "recordTab"
+
+var TABS_DETAILS_IMGAGE = "img"
+var TABS_DETAILS_TITLE = "title"
+var TABS_DETAILS_ICON = "icon"
+var TABS_DETAILS_URL = "url"
+
 var tabsDetails = {};
 var indexedWindows = {};
 
@@ -9,7 +19,7 @@ function capturePage(tabId){
       chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
         if(tabs[0].id == tabId)
           saveImage(tabId, screenshotUrl);
-        else if(!tabsDetails[tabId] || !tabsDetails[tabId]["img"])
+        else if(!tabsDetails[tabId] || !tabsDetails[tabId][TABS_DETAILS_IMGAGE])
           chrome.tabs.get(tabId, function(tab){ indexImages(Array(tab), 0)});
       });
     }
@@ -29,9 +39,9 @@ function saveImage(tabId, image){
     var tabDetails = {};
     if(tabsDetails[tabId])
       tabDetails = tabsDetails[tabId];
-    tabDetails["img"] = image;
+    tabDetails[TABS_DETAILS_IMGAGE] = image;
     tabsDetails[tabId] = tabDetails;
-    chrome.runtime.sendMessage({cmd: "updateImage", tabId: tabId, img: image}, function(){
+    chrome.runtime.sendMessage({cmd: CMD_UPDATE_IMAGE, tabId: tabId, img: image}, function(){
       var lastError = chrome.runtime.lastError;
     });
     save(tabId);
@@ -40,7 +50,8 @@ function saveImage(tabId, image){
 
 function save(tabId){
   chrome.tabs.get(tabId, function(tab){
-    saveTab(tab);
+    if(tab)
+      saveTab(tab);
   });
 }
 
@@ -48,9 +59,9 @@ function saveTab(tab){
   var tabDetails = {};
   if(tabsDetails[tab.id])
     tabDetails = tabsDetails[tab.id];
-  tabDetails["icon"] = tab.favIconUrl;
-  tabDetails["title"] = tab.title;
-  tabDetails["url"] = extractDomain(tab.url);
+  tabDetails[TABS_DETAILS_ICON] = tab.favIconUrl;
+  tabDetails[TABS_DETAILS_TITLE] = tab.title;
+  tabDetails[TABS_DETAILS_URL] = extractDomain(tab.url);
   tabsDetails[tab.id] = tabDetails;
 }
 
@@ -86,8 +97,8 @@ function indexImages(tabs, index){
   var tab = tabs[index];
   chrome.tabs.executeScript(tab.id, {file: "js/full-content.js"}, function(){
     var lastError = chrome.runtime.lastError;
-    if(lastError)
-      saveImage(tab.id, "NoImage");
+    if(lastError && tab.active)
+      capturePage(tab.id);
     indexImages(tabs, index + 1);
   });
 }
@@ -99,12 +110,12 @@ function indexTabs(tabs){
 }
 
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
-  if(request.cmd == "recordTab"){
+  if(request.cmd == CMD_RECORD_TAB_IMAGE){
     save(sender.tab.id);
     saveImage(sender.tab.id, request.image)
-  } else if(request.cmd == "removeTab"){
+  } else if(request.cmd == CMD_REMOVE_TAB){
     remove(request.tabId);
-  } else if(request.cmd == "getTabs"){
+  } else if(request.cmd == CMD_GET_TABS_DETAILS){
     var requestedIds = request.tabsIds;
     var requestedTabsDetails = {};
     for (var i = 0; i< requestedIds.length; i++) {
@@ -140,7 +151,7 @@ chrome.windows.onFocusChanged.addListener(function(windowId){
     });
 });
 
-removeAll(); 
+// Start Indexing tabs of current window
 chrome.tabs.query({currentWindow: true}, function(tabs){
   indexedWindows[tabs[0].windowId] = true;
   indexTabs(tabs);

@@ -1,12 +1,15 @@
+var CMD_RECORD_TAB_IMAGE = "recordTab"
+var quality = 0.5
+
 html2canvas($("body"), {
     onrendered: function(canvas) {
         // canvas is the final rendered <canvas> element
-        var myImage = canvas.toDataURL("image/jpeg", 0.5);
-        chrome.runtime.sendMessage({cmd: "recordTab", image: myImage});
+        var myImage = canvas.toDataURL("image/jpeg", quality);
+        chrome.runtime.sendMessage({cmd: CMD_RECORD_TAB_IMAGE, image: myImage});
     },
       useCORS: true,
-	  width: width(),
-	  height: height()
+      width: width(),
+      height: height()
 });
 
 function width(){

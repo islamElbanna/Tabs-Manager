@@ -50,6 +50,7 @@ function saveImage(tabId, image){
 
 function save(tabId){
   chrome.tabs.get(tabId, function(tab){
+    var lastError = chrome.runtime.lastError;
     if(tab)
       saveTab(tab);
   });

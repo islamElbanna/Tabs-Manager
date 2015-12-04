@@ -13,9 +13,9 @@
     }
   ],
   "browser_action": {
-    "default_icon": "/img/layouts_four_grid-128.png",
+    "default_icon": "/img/icon.png",
     "default_title": "Tabs Manager",
-    "default_popup": "tabsManager.html"
+    "default_popup": "index.html"
   },
   "permissions": [
     "tabs",
@@ -23,8 +23,8 @@
     "storage",
     "<all_urls>"
   ],
-  "icons": { "16": "/img/layouts_four_grid-128.png",
-           "48": "/img/layouts_four_grid-128.png",
-          "128": "/img/layouts_four_grid-128.png" },
+  "icons": { "16": "/img/icon.png",
+           "48": "/img/icon.png",
+          "128": "/img/icon.png" },
   "manifest_version": 2
 }

@@ -241,12 +241,16 @@ h5, h6 {
     padding: 0 16px 0 72px;
 }
 
-.mdl-layout__header-row img{
+.mdl-layout__header-row img.logo{
   background-color: white;
   width: 25px;
   margin-right: 5px;
 }
 
+.mdl-layout__header-row img.newTab{
+  margin-left: 580px;
+  cursor: pointer;
+}
 
 .mdl-card, .mdl-card__supporting-text {
   overflow: visible;

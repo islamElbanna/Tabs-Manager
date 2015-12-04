@@ -29,6 +29,8 @@
     margin-bottom: 5px;
 	transition: 0.3s ease-in;
 
+	box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12);
+
 	/* required to hide the image after resized */
 	overflow:hidden;
 	
@@ -41,7 +43,7 @@
 
 .controllPanel{
 	float: left;
-	width: 9%;
+	width: 15%;
     height: 100%;
 }
 
@@ -62,7 +64,7 @@
 
 .row .item:hover {
 	width:220px;
-	height:170px;
+	height:180px;
 	margin-top: 0px;
 }
 
@@ -130,19 +132,19 @@
 }
 
 .row .item .caption a {
-	text-decoration:none;
-	font-size:16px;	
-	
-	/* add spacing and make the whole row clickable*/
-	padding:5px;
-	display:block;
+	text-decoration: none;
+    font-size: 16px;
+    padding-right: 10px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    display: block;
 }
 
 .row .item .caption p {
-	padding:2px;	
+	padding:5px;	
 	margin:1;
 	font-size:12px;
-	width: 90%;
+	width: 84%;
 	float: left;
 	max-height: 50px;
     overflow: hidden;

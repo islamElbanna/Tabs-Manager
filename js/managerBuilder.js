@@ -218,10 +218,6 @@ function addEvents(){
 }
 
 function addGlobalEvents(){
-	$("#addNewTab").bind("click", function(){
-		chrome.tabs.create({active: true});
-	});
-
 	// Server
 	chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
 	  if(request.cmd == CMD_UPDATE_IMAGE){

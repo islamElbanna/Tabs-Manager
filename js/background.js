@@ -7,6 +7,7 @@ var TABS_DETAILS_IMGAGE = "img"
 var TABS_DETAILS_TITLE = "title"
 var TABS_DETAILS_ICON = "icon"
 var TABS_DETAILS_URL = "url"
+var TABS_DETAILS_PINNED = "pinned"
 
 var tabsDetails = {};
 var indexedWindows = {};
@@ -62,6 +63,7 @@ function saveTab(tab){
     tabDetails = tabsDetails[tab.id];
   tabDetails[TABS_DETAILS_ICON] = tab.favIconUrl;
   tabDetails[TABS_DETAILS_TITLE] = tab.title;
+  tabDetails[TABS_DETAILS_PINNED] = tab.pinned;
   tabDetails[TABS_DETAILS_URL] = extractDomain(tab.url);
   tabsDetails[tab.id] = tabDetails;
 }

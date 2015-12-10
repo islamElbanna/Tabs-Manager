@@ -6,6 +6,7 @@ var TABS_DETAILS_IMGAGE = "img"
 var TABS_DETAILS_TITLE = "title"
 var TABS_DETAILS_ICON = "icon"
 var TABS_DETAILS_URL = "url"
+var TABS_DETAILS_PINNED = "pinned"
 
 var IMG_NO_IMAGE = "img/no-image.png"
 
@@ -53,11 +54,17 @@ function buildTabs(tabsdDetails){
   		var groupTabsDetails = tabsGroups[group];
 		var groupIcon = getGroupIcon(group, groupTabsDetails);
 		
-		if(group == "others")
+		var classTag = "";
+		if(group == "others"){
+			classTag = "important-header"
 			group = "Domains With Single Tab"
+		} else if(group == "pinned"){
+			classTag = "important-header"
+			group = "Pinned Tabs"
+		}
 
 		var groupSection = '<div class="panel panel-default">'+
-  								'<div class="panel-heading"><img src="'+ groupIcon +'" class="groupIcon">'+ group +
+  								'<div class="panel-heading '+ classTag +'"><img src="'+ groupIcon +'" class="groupIcon">'+ group +
   								'<a title="Close Group" class="closeGroup"><span class="glyphicon glyphicon-remove" ></span></a>'+
   								'</div>'+
   								'<div class="panel-body">'+
@@ -112,9 +119,12 @@ function buildGroupTabs(groupTabsDetails){
 
 function groupTabs(tabsdDetails){
 	var tabsGroups = {};
+	var pinnedGroup = {};
 	for (var tabId in tabsdDetails) {
 		var tabDetails = tabsdDetails[tabId];
-		if(tabsGroups[tabDetails[TABS_DETAILS_URL]]){
+		if(tabDetails[TABS_DETAILS_PINNED]){
+			pinnedGroup[tabId] = tabDetails;
+		} else if(tabsGroups[tabDetails[TABS_DETAILS_URL]]){
 			tabsGroups[tabDetails[TABS_DETAILS_URL]][tabId] = tabDetails;
 		} else {
 			var list = {};
@@ -134,6 +144,9 @@ function groupTabs(tabsdDetails){
 		}
 	}
 
+	if(Object.keys(pinnedGroup).length > 0)
+		tabsGroups["pinned"] = pinnedGroup;
+
 	if(Object.keys(othersGroup).length > 0)
 		tabsGroups["others"] = othersGroup;
 
@@ -143,18 +156,23 @@ function groupTabs(tabsdDetails){
 function sortGroups(groups){
 	var keys = []
 	for (k in groups) {
-	  if (k != "others" && groups.hasOwnProperty(k)) {
+	  if (k != "others" && k != "pinned" && groups.hasOwnProperty(k)) {
 	    keys.push(k);
 	  }
 	}
 	var sortedGroups = keys.sort();
 	sortedGroups.push("others");
+	sortedGroups.unshift("pinned");
 	return sortedGroups;
 }
 
 function getGroupIcon(groupName, groupTabsDetails){
-	var icon = "img/other.ico";	
-	if(groupName != "others")
+	var icon = "img/other.ico";
+	if(groupName == "others")
+		return icon;
+	else if (groupName == "pinned")
+		return "img/pin.png";
+	else			
 		for (var tabId in groupTabsDetails)
 			if(groupTabsDetails[tabId][TABS_DETAILS_ICON])
 				icon = groupTabsDetails[tabId][TABS_DETAILS_ICON];

@@ -79,41 +79,26 @@ function buildTabs(tabsdDetails){
 
 function buildGroupTabs(groupTabsDetails){
 	var groupSection = "";
-	var row = "";
-	var tabsPerRow = 4;
-	var index = 0;
 	for (var tabId in groupTabsDetails) {
     	var tabDetails = groupTabsDetails[tabId];
     	if(tabDetails[TABS_DETAILS_TITLE]){
-	    	if(index == 0)
-	    		row = "<div class='row'>";
-	    	index++;
-
 	    	var img = getImage(tabDetails[TABS_DETAILS_IMGAGE]);
 	    	var title = tabDetails[TABS_DETAILS_TITLE];
 	    	var url = tabDetails[TABS_DETAILS_URL];
-	        row += '<div class="item" id="'+ tabId +'">' +
-						'<a class="thumbnailImg tab" href="#" tabId="'+ tabId +'" >'+
-							'<img src="'+ img +'" />'+
-						'</a>'+
-						'<div class="caption">'+
-							'<p>'+ title +'</p>'+
-							'<div class="controllPanel">'+
-								'<a tabId="'+ tabId +'" title="Close" class="closeTab"><span class="glyphicon glyphicon-remove" ></span></a>'+ 
-								'<a class="zoomTab" title="Zoom In" href="'+ img +'" data-lighter><span class="glyphicon glyphicon-zoom-in" ></span></a>'+
-							'</div>'+
-						'</div>'+
-					'</div>';
-			if(index + 1 > tabsPerRow){
-				index = 0;
-				groupSection += row + "</div>"; 
-			}
+	        groupSection += '<div class="item" id="'+ tabId +'">' +
+								'<a class="thumbnailImg tab" href="#" >'+
+									'<img src="'+ img +'" />'+
+								'</a>'+
+								'<div class="caption">'+
+									'<div class="controllPanel">'+
+										'<a tabId="'+ tabId +'" title="Close" class="closeTab"><span class="glyphicon glyphicon-remove" ></span></a>'+ 
+										'<a class="zoomTab" title="Zoom In" href="'+ img +'" data-lighter><span class="glyphicon glyphicon-fullscreen" ></span></a>'+
+									'</div>'+
+									'<p tabId="'+ tabId +'" >'+ title +'</p>'+
+								'</div>'+
+							'</div>';
 		}
     }
-
-	if(index > 0)
-	    groupSection += row + "</div>";
-
     return groupSection;
 }
 
@@ -213,7 +198,7 @@ function addEvents(){
 		$(this).find('div.caption').stop(false,true).fadeOut(200);
 	});
 
-	$(".tab").bind("click", function(){
+	$(".item p").bind("click", function(e){
 		var tabId = $(this).attr("tabId");
 		chrome.tabs.update(parseInt(tabId), {active: true});
 		window.close();	
@@ -253,15 +238,10 @@ function addGlobalEvents(){
 		}
 	  } else if (request.cmd == CMD_REMOVE_TAB){
 		var id = request.tabId;
-	  	var row = $("#" + id).parent();
+	  	var group = $("#" + id).parent().parent();
 		$("#" + id).remove();
-		if(row.find(".item").length == 0){
-			var group = $(row).parent().parent();
-			if($(group).find(".row").length == 1){
-				$(group).remove();
-			} else{
-				$(row).remove();
-			}
+		if($(group).find(".item").length == 0){
+			$(group).remove();
 		}
 	  }
 	});

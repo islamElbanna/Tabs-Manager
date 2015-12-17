@@ -27,7 +27,7 @@ html, body {
   height: 600px;
 }
 .mdl-demo .mdl-layout__header-row {
-  padding-left: 15px;
+  padding-left: 10px;
 }
 .mdl-demo .mdl-layout.is-small-screen .mdl-layout__header-row h3 {
   font-size: inherit;

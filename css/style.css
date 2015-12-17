@@ -20,9 +20,13 @@
     padding: 5px;
 }
 
-.row .item {
-	width:165px;
-	height:88px;	
+.item p{
+	cursor: pointer;
+}
+
+.item {
+	width:178px;
+	height:98px;	
 	border: 2px solid #BFBFBF;
 	border-radius: 4px;	
 	margin-right: 5px;
@@ -42,30 +46,13 @@
 }
 
 .controllPanel{
-	float: left;
-	width: 15%;
-    height: 100%;
-}
-
-.row {
-	display: inline-block;
-	margin-left: 2px;
-	min-width: 680px;
+	width: 100%;
+    height: 20px;
 }
 
 .groupIcon{
 	height: 20px;
     margin-right: 5px;
-}
-
-.row:hover .item {
-	margin-top: 4%;
-}
-
-.row .item:hover {
-	width:220px;
-	height:180px;
-	margin-top: 0px;
 }
 
 .container {
@@ -81,16 +68,13 @@
 
 .panel-heading {
     padding: 5px 10px;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
 }
 
-.row .item:hover .thumbnailImg img {
-	width:220px;
-}
-
-.row .item .caption {
-	width:220px;
+.item .caption {
+	width:100%;
+	height: 100%;
 
 	background:#000;
 	color:#fff;
@@ -112,7 +96,7 @@
 }
 
 .zoomTab:hover{
-	color: #BFBFBF;
+	color: #4285f4;
 }
 
 .zoomTab{
@@ -131,28 +115,32 @@
 	float: right;
 }
 
-.row .item .caption a {
+.item .caption a {
 	text-decoration: none;
     font-size: 16px;
     padding-right: 10px;
     padding-top: 3px;
-    padding-bottom: 3px;
     display: block;
 }
 
-.row .item .caption p {
+.item .caption a.zoomTab {
+	font-size: 14px;
+}
+
+.item .caption p {
 	padding:5px;	
 	margin:1;
 	font-size:12px;
-	width: 84%;
+	width: 100%;
+	line-height: 1.2;
 	float: left;
 	max-height: 50px;
     overflow: hidden;
 }
 
-.row .item .thumbnailImg img {
+.item .thumbnailImg img {
 	border:0;
-	width:160px;
+	width:180px;
 	/* allow javascript moves the img position*/
 	position:absolute;
 }

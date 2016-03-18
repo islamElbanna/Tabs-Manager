@@ -10,6 +10,8 @@ var TABS_DETAILS_PINNED = "pinned"
 
 var IMG_NO_IMAGE = "img/no-image.png"
 
+var lastSearch = "";
+
 function load(){
 	buildWindowTabs();	
 	addGlobalEvents();
@@ -25,7 +27,7 @@ function buildWindowTabs(){
 }
 
 function retrieveTabsDetails(tabsIds){
-	chrome.extension.sendMessage({cmd: CMD_GET_TABS_DETAILS, tabsIds: tabsIds}, function(tabsdDetails){
+	chrome.extension.sendMessage({cmd: CMD_GET_TABS_DETAILS, tabsIds: tabsIds, searchText: $("#filter").val()}, function(tabsdDetails){
 		if(Object.keys(tabsdDetails).length == tabsIds.length){
 			loadTabs(tabsdDetails);
 		} else {
@@ -56,11 +58,11 @@ function buildTabs(tabsdDetails){
 		
 		var classTag = "";
 		if(group == "others"){
-			classTag = "important-header"
-			group = "Domains With Single Tab"
+			classTag = "important-header";
+			group = "Tabs from different domains";
 		} else if(group == "pinned"){
-			classTag = "important-header"
-			group = "Pinned Tabs"
+			classTag = "important-header";
+			group = "Pinned Tabs";
 		}
 
 		var groupSection = '<div class="panel panel-default">'+
@@ -217,6 +219,13 @@ function addEvents(){
 
 	$(".panel-heading").bind("click", function(){
 		$(this).parent().find(".panel-body").slideToggle();
+	});
+
+	$("#filter").bind("keyup", function() {
+		if(lastSearch != $("#filter").val()){
+   			lastSearch = $("#filter").val();
+   			load(); 
+		}
 	});
 }
 

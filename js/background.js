@@ -12,6 +12,12 @@ var TABS_DETAILS_PINNED = "pinned"
 var tabsDetails = {};
 var indexedWindows = {};
 
+var index = lunr(function () {
+  this.field('url', {boost: 10});
+  this.field('title', {boost: 5});
+  this.ref('id');
+})
+
 function capturePage(tabId){
   save(tabId)
   chrome.tabs.captureVisibleTab({quality: 12}, function(screenshotUrl) {
@@ -33,6 +39,7 @@ function removeAll(){
 
 function remove(tabId){
   delete tabsDetails[tabId];
+  index.remove(tabId);
 }
 
 function saveImage(tabId, image){
@@ -61,11 +68,17 @@ function saveTab(tab){
   var tabDetails = {};
   if(tabsDetails[tab.id])
     tabDetails = tabsDetails[tab.id];
+  console.debug(tab);
   tabDetails[TABS_DETAILS_ICON] = tab.favIconUrl;
   tabDetails[TABS_DETAILS_TITLE] = tab.title;
   tabDetails[TABS_DETAILS_PINNED] = tab.pinned;
   tabDetails[TABS_DETAILS_URL] = extractDomain(tab.url);
   tabsDetails[tab.id] = tabDetails;
+  index.add({
+    id: tab.id,
+    title: tab.title,
+    url: extractDomain(tab.url)
+  })
 }
 
 function extractDomain(url) {
@@ -118,6 +131,20 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
     saveImage(sender.tab.id, request.image)
   } else if(request.cmd == CMD_GET_TABS_DETAILS){
     var requestedIds = request.tabsIds;
+    if(request.searchText && request.searchText != ""){
+      var filteredPages = index.search(request.searchText);
+      var flags = {};
+      for (var i = 0; i< filteredPages.length; i++)
+        flags[filteredPages[i].ref] = true;
+
+      var filteredTabs = [];
+      for (var i = 0; i< requestedIds.length; i++) {
+        if(flags[requestedIds[i]]){
+          filteredTabs.push(requestedIds[i]);
+        }
+      }
+      requestedIds = filteredTabs;
+    }
     var requestedTabsDetails = {};
     for (var i = 0; i< requestedIds.length; i++) {
       var tabId = requestedIds[i];

@@ -4,7 +4,7 @@
   "description": "Manage your tabs with their thumbnails to have a quick access",
   "background": {
     "persistent": true,
-    "scripts": ["/js/background.js"]
+    "scripts": ["/js/lib/lunr.min.js", "/js/background.js"]
   },
   "content_scripts": [
     {

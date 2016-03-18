@@ -41,6 +41,7 @@ function loadTabs(tabsdDetails){
 	var tabsList = buildTabs(tabsdDetails);	
 	document.getElementById('tabsList').innerHTML = tabsList;
 	addEvents();
+	$("#filter").focus();
 }
 
 function buildTabs(tabsdDetails){

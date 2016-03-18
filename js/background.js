@@ -68,7 +68,6 @@ function saveTab(tab){
   var tabDetails = {};
   if(tabsDetails[tab.id])
     tabDetails = tabsDetails[tab.id];
-  console.debug(tab);
   tabDetails[TABS_DETAILS_ICON] = tab.favIconUrl;
   tabDetails[TABS_DETAILS_TITLE] = tab.title;
   tabDetails[TABS_DETAILS_PINNED] = tab.pinned;

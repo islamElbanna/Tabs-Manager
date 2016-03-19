@@ -9,7 +9,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["/js/lib/jquery-2.1.4.min.js", "/js/lib/html2canvas.js", "/js/content.js"]
+      "js": ["/js/full-content.js"]
     }
   ],
   "browser_action": {

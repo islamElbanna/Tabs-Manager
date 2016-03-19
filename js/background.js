@@ -76,7 +76,7 @@ function saveTab(tab){
   index.add({
     id: tab.id,
     title: tab.title,
-    url: extractDomain(tab.url)
+    url: extractDomain(tab.url).replace("www.", "")
   })
 }
 

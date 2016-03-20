@@ -1,6 +1,6 @@
 {
   "name": "Tabs Manager",
-  "version": "0.9",
+  "version": "0.95",
   "description": "Manage your tabs with their thumbnails to have a quick access",
   "background": {
     "persistent": true,

@@ -66,11 +66,11 @@ function buildTabs(tabsdDetails){
 			group = "Pinned Tabs";
 		}
 
-		var groupSection = '<div class="panel panel-default">'+
-  								'<div class="panel-heading '+ classTag +'"><img src="'+ groupIcon +'" class="groupIcon">'+ group +
-  								'<a title="Close Group" class="closeGroup"><span class="glyphicon glyphicon-remove" ></span></a>'+
+		var groupSection = '<div class="card">'+
+  								'<div class="card-header '+ classTag +'"><img src="'+ groupIcon +'" class="groupIcon">'+ group +
+  								'<a title="Close Group" class="closeGroup"><span class="fa fa-trash-o" ></span></a>'+
   								'</div>'+
-  								'<div class="panel-body">'+
+  								'<div class="card-body">'+
   									buildGroupTabs(groupTabsDetails) +
   								'</div>'+
   							'</div>';
@@ -94,8 +94,8 @@ function buildGroupTabs(groupTabsDetails){
 								'</a>'+
 								'<div class="caption">'+
 									'<div class="controllPanel">'+
-										'<a tabId="'+ tabId +'" title="Close" class="closeTab"><span class="glyphicon glyphicon-remove" ></span></a>'+ 
-										'<a class="zoomTab" title="Zoom In" href="'+ img +'" data-lighter><span class="glyphicon glyphicon-fullscreen" ></span></a>'+
+										'<a tabId="'+ tabId +'" title="Close" class="closeTab"><span class="fa fa-trash-o" ></span></a>'+ 
+										'<a class="zoomTab" title="Zoom In" href="'+ img +'" data-lighter><span class="fa fa-expand" ></span></a>'+
 									'</div>'+
 									'<p tabId="'+ tabId +'" >'+ title +'</p>'+
 								'</div>'+
@@ -218,8 +218,8 @@ function addEvents(){
 		});
 	});
 
-	$(".panel-heading").bind("click", function(){
-		$(this).parent().find(".panel-body").slideToggle();
+	$(".card-header").bind("click", function(){
+		$(this).parent().find(".card-body").slideToggle();
 	});
 
 	$("#filter").bind("keyup", function() {

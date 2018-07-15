@@ -2,6 +2,7 @@ var CMD_UPDATE_IMAGE = "updateImage"
 var CMD_GET_TABS_DETAILS = "getTabs"
 var CMD_REMOVE_TAB = "removeTab"
 var CMD_RECORD_TAB_IMAGE = "recordTab"
+var CMD_INDEX_TAB = "indexTab";
 
 var TABS_DETAILS_IMGAGE = "img"
 var TABS_DETAILS_TITLE = "title"
@@ -15,6 +16,7 @@ var indexedWindows = {};
 var index = lunr(function () {
   this.field('url', {boost: 10});
   this.field('title', {boost: 5});
+  this.field('content');
   this.ref('id');
 })
 
@@ -124,10 +126,21 @@ function indexTabs(tabs){
   }
 }
 
+function indexTabContent(tab, content){
+  index.add({
+    id: tab.id,
+    title: tab.title.replace("/", " ").replace("-", " "),
+    url: extractDomain(tab.url).replace("www.", "").replace(".", " "),
+    content: content
+  })
+}
+
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
   if(request.cmd == CMD_RECORD_TAB_IMAGE){
     save(sender.tab.id);
     saveImage(sender.tab.id, request.image)
+  } if(request.cmd == CMD_INDEX_TAB){
+    indexTabContent(sender.tab, request.content);
   } else if(request.cmd == CMD_GET_TABS_DETAILS){
     var requestedIds = request.tabsIds;
     if(request.searchText && request.searchText != ""){

@@ -152,7 +152,7 @@
 	box-shadow: 0 0 10px #ccc; 
 }
 
-.panel-default>.important-header {
+.card-default>.important-header {
     color: #3F51B5!important;
 }
 

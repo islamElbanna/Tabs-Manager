@@ -1,6 +1,6 @@
 {
   "name": "Tabs Manager",
-  "version": "0.95",
+  "version": "0.97",
   "description": "Manage your tabs with their thumbnails to have a quick access",
   "background": {
     "persistent": true,
@@ -26,5 +26,13 @@
   "icons": { "16": "/img/icon.png",
            "48": "/img/icon.png",
           "128": "/img/icon.png" },
-  "manifest_version": 2
+  "manifest_version": 2,
+  "commands": {
+    "_execute_browser_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F"
+      },
+      "description": "Open Tabs manager on search mode"
+    }
+  }
 }

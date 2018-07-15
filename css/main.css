@@ -283,9 +283,7 @@ h5, h6 {
   cursor: pointer;
 }
 
-.item {
-  width:178px;
-  height:98px;  
+.item {  
   border: 2px solid #BFBFBF;
   border-radius: 4px; 
   margin-right: 5px;
@@ -304,9 +302,26 @@ h5, h6 {
   float:left;
 }
 
+.small-thumbnail{
+  width:178px;
+  height:98px;
+}
+.medium-thumbnail{
+  width: 240px;
+  height: 125px;
+}
+.large-thumbnail{
+  width:364px;
+  height:200px;
+}
+.super-large-thumbnail{
+  width: 730px;
+  height: 300px;
+}
+
 .controllPanel{
   width: 100%;
-    height: 20px;
+  height: 20px;
 }
 
 .groupIcon{
@@ -444,4 +459,8 @@ h5, h6 {
   direction: ltr;
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: #54a6ff;
 }

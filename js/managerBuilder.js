@@ -11,10 +11,20 @@ var TABS_DETAILS_PINNED = "pinned"
 var IMG_NO_IMAGE = "img/no-image.png"
 
 var lastSearch = "";
+var thumbnail_size = ""
 
 function load(){
+	loadOptions();
 	buildWindowTabs();	
 	addGlobalEvents();
+}
+
+function loadOptions(){
+	chrome.storage.sync.get({
+    	favoriteThumbnailSize: 'medium-thumbnail',
+  	}, function(items) {
+    	thumbnail_size = items.favoriteThumbnailSize;
+  	});
 }
 
 function buildWindowTabs(){
@@ -88,7 +98,7 @@ function buildGroupTabs(groupTabsDetails){
 	    	var img = getImage(tabDetails[TABS_DETAILS_IMGAGE]);
 	    	var title = tabDetails[TABS_DETAILS_TITLE];
 	    	var url = tabDetails[TABS_DETAILS_URL];
-	        groupSection += '<div class="item" id="'+ tabId +'">' +
+	        groupSection += '<div class="item '+ thumbnail_size +'" id="'+ tabId +'">' +
 								'<a class="thumbnailImg tab" href="#" >'+
 									'<img src="'+ img +'" />'+
 								'</a>'+

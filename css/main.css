@@ -398,7 +398,7 @@ h5, h6 {
 
 .item .thumbnailImg img {
   border:0;
-  width:180px;
+  width:100%;
   /* allow javascript moves the img position*/
   position:absolute;
 }

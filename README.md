@@ -5,3 +5,4 @@
 	* Group tabs with domain name.
 	* Multi window support.
 	* Close tab or group of tabs.
+	* Shortcut for fast searching

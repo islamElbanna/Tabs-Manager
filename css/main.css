@@ -464,3 +464,19 @@ h5, h6 {
 a {
     color: #54a6ff;
 }
+
+.settings-btn{
+  margin-left: 5px;
+  background-color: rgb(63,81,181)!important;
+}
+
+.settings{
+  font-size: large;
+  color: white;
+  vertical-align: middle;
+}
+
+.input-group>.custom-select:not(:last-child), .input-group>.form-control:not(:last-child){
+  border-top-right-radius: .25rem;
+  border-bottom-right-radius: .25rem;
+}

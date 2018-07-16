@@ -98,6 +98,8 @@ function buildGroupTabs(groupTabsDetails){
 	    	var img = getImage(tabDetails[TABS_DETAILS_IMGAGE]);
 	    	var title = tabDetails[TABS_DETAILS_TITLE];
 	    	var url = tabDetails[TABS_DETAILS_URL];
+	    	if(thumbnail_size == "")
+	    		thumbnail_size = "medium-thumbnail";
 	        groupSection += '<div class="item '+ thumbnail_size +'" id="'+ tabId +'">' +
 								'<a class="thumbnailImg tab" href="#" >'+
 									'<img src="'+ img +'" />'+

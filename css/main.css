@@ -302,21 +302,25 @@ h5, h6 {
   float:left;
 }
 
+.item:hover {
+    border-color: #4285f4;
+}
+
 .small-thumbnail{
   width:178px;
-  height:98px;
+  height:130px;
 }
 .medium-thumbnail{
   width: 240px;
-  height: 125px;
+  height: 165px;
 }
 .large-thumbnail{
-  width:364px;
-  height:200px;
+  width:360px;
+  height:225px;
 }
 .super-large-thumbnail{
   width: 730px;
-  height: 300px;
+  height: 418px;
 }
 
 .controllPanel{
@@ -346,35 +350,13 @@ h5, h6 {
     font-weight: bold;
 }
 
-.item .caption {
-  width:100%;
-  height: 100%;
-
-  background:#000;
-  color:#fff;
-  font-weight:bold;
-    
-  /* fix it at the bottom */
-  position:absolute;
-  bottom:0;
-
-  /* hide it by default */
-  display:none;
-
-  /* opacity setting */
-  filter:alpha(opacity=80);    /* ie  */
-  -moz-opacity:0.8;    /* old mozilla browser like netscape  */
-  -khtml-opacity: 0.8;    /* for really really old safari */  
-  opacity: 0.7;    /* css standard, currently it works in most modern browsers like firefox,  */
-
-}
-
 .zoomTab:hover{
   color: #4285f4;
 }
 
 .zoomTab{
-  color: white;
+  color: black;
+  margin-right: 10px;
   cursor: pointer;
   float: right;
 }
@@ -387,35 +369,12 @@ h5, h6 {
   color: #FF5151;
   cursor: pointer;
   float: right;
-}
-
-.item .caption a {
-  text-decoration: none;
-    font-size: 16px;
-    padding-right: 10px;
-    padding-top: 3px;
-    display: block;
-}
-
-.item .caption a.zoomTab {
-  font-size: 14px;
-}
-
-.item .caption p {
-  padding:5px;  
-  margin:1;
-  font-size:12px;
-  width: 100%;
-  line-height: 1.2;
-  float: left;
-    overflow: hidden;
+  margin-right: 5px;
 }
 
 .item .thumbnailImg img {
   border:0;
   width:100%;
-  /* allow javascript moves the img position*/
-  position:absolute;
 }
 
 .clear {
@@ -479,4 +438,61 @@ a {
 .input-group>.custom-select:not(:last-child), .input-group>.form-control:not(:last-child){
   border-top-right-radius: .25rem;
   border-bottom-right-radius: .25rem;
+}
+
+.title-section{
+  float: left;
+  display: inline-block;
+  width: 74%;
+  white-space: pre;
+  overflow: hidden;
+}
+
+.control-section{
+  float: right;
+  width: 25%;
+}
+
+.large-thumbnail .title-section{
+  width: 84%;
+}
+
+.large-thumbnail .control-section{
+  width: 15%;
+}
+
+.medium-thumbnail .title-section{
+  width: 79%;
+}
+
+.medium-thumbnail .control-section{
+  width: 20%;
+}
+
+.small-thumbnail .title-section{
+  width: 74%;
+}
+
+.small-thumbnail .control-section{
+  width: 25%;
+}
+
+.super-large-thumbnail .title-section{
+  width: 93%;
+}
+
+.super-large-thumbnail .control-section{
+  width: 6%;
+}
+
+.card-header {
+    padding: 0.50rem 1.25rem;
+}
+
+.mdl-demo main > .mdl-layout__tab-panel {
+    padding-bottom: 0px;
+}
+
+.card-footer {
+    padding: .50rem 0.50rem;
 }

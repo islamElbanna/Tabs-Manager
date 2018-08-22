@@ -68,7 +68,9 @@ function buildTabs(tabsdDetails){
 		var groupIcon = getGroupIcon(group, groupTabsDetails);
 		
 		var classTag = "";
+		var isOthersGroup = false;
 		if(group == "others"){
+			isOthersGroup = true;
 			classTag = "important-header";
 			group = "Tabs from different domains";
 		} else if(group == "pinned"){
@@ -81,7 +83,7 @@ function buildTabs(tabsdDetails){
   								'<a title="Close Group" class="closeGroup"><span class="fa fa-trash-o" ></span></a>'+
   								'</div>'+
   								'<div class="card-body">'+
-  									buildGroupTabs(groupTabsDetails) +
+  									buildGroupTabs(groupTabsDetails, isOthersGroup) +
   								'</div>'+
   							'</div>';
   		tabsList += groupSection;
@@ -90,7 +92,7 @@ function buildTabs(tabsdDetails){
     return tabsList;
 }
 
-function buildGroupTabs(groupTabsDetails){
+function buildGroupTabs(groupTabsDetails, isOthersGroup){
 	var groupSection = "";
 	for (var tabId in groupTabsDetails) {
     	var tabDetails = groupTabsDetails[tabId];
@@ -98,18 +100,25 @@ function buildGroupTabs(groupTabsDetails){
 	    	var img = getImage(tabDetails[TABS_DETAILS_IMGAGE]);
 	    	var title = tabDetails[TABS_DETAILS_TITLE];
 	    	var url = tabDetails[TABS_DETAILS_URL];
+	    	var icon = tabDetails[TABS_DETAILS_ICON];
 	    	if(thumbnail_size == "")
 	    		thumbnail_size = "medium-thumbnail";
-	        groupSection += '<div class="item '+ thumbnail_size +'" id="'+ tabId +'">' +
-								'<a class="thumbnailImg tab" href="#" >'+
-									'<img src="'+ img +'" />'+
-								'</a>'+
-								'<div class="caption">'+
-									'<div class="controllPanel">'+
-										'<a tabId="'+ tabId +'" title="Close" class="closeTab"><span class="fa fa-trash-o" ></span></a>'+ 
-										'<a class="zoomTab" title="Zoom In" href="'+ img +'" data-lighter><span class="fa fa-expand" ></span></a>'+
+	        groupSection += '<div class="card item '+ thumbnail_size +'" id="'+ tabId +'">' +
+	        					'<div class="card-body" tabId="'+ tabId +'">'+
+									'<a class="thumbnailImg tab" href="#" >'+
+										'<img src="'+ img +'" />'+
+									'</a>'+
+								'</div>'+	
+								'<div class="card-footer">'+
+									'<div class="title-section">';
+										if(isOthersGroup)
+											groupSection += '<img src="'+ icon +'" class="groupIcon">';
+										groupSection += '<span title="'+ title +'">'+ title +'</span>'+
 									'</div>'+
-									'<p tabId="'+ tabId +'" >'+ title +'</p>'+
+									'<div class="control-section">'+
+										'<a tabId="'+ tabId +'" title="Close" class="closeTab"><span class="fa fa-trash-o" ></span></a>'+ 
+										'<a class="zoomTab" title="Zoom In" href="'+ img +'" data-lighter><span class="fa fa-arrows-alt" ></span></a>'+		
+									'</div>'+
 								'</div>'+
 							'</div>';
 		}
@@ -213,7 +222,7 @@ function addEvents(){
 		$(this).find('div.caption').stop(false,true).fadeOut(200);
 	});
 
-	$(".item p").bind("click", function(e){
+	$(".item .card-body").bind("click", function(e){
 		var tabId = $(this).attr("tabId");
 		chrome.tabs.update(parseInt(tabId), {active: true});
 		window.close();	

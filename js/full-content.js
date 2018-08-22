@@ -15,7 +15,6 @@ var text = getText("h1") + getText("h2") + getText("h3") + getText("h4") + getTe
 chrome.runtime.sendMessage({cmd: CMD_INDEX_TAB, content: text});
 
 if (document.hidden
-	&& document.readyState === "complete"
 	&& document.getElementsByTagName("*").length <= DOM_LIMIT){ // Fix me issue https://github.com/niklasvh/html2canvas/issues/835
 	html2canvas(document.body, {
 		useCORS: true,

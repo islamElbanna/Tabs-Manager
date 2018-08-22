@@ -74,6 +74,7 @@ function buildTabs(tabsdDetails){
 			classTag = "important-header";
 			group = "Tabs from different domains";
 		} else if(group == "pinned"){
+			isOthersGroup = true;
 			classTag = "important-header";
 			group = "Pinned Tabs";
 		}

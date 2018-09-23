@@ -42,6 +42,7 @@ function removeAll(){
 function remove(tabId){
   delete tabsDetails[tabId];
   index.remove(tabId);
+  update_counter();
 }
 
 function saveImage(tabId, image){
@@ -61,8 +62,10 @@ function saveImage(tabId, image){
 function save(tabId){
   chrome.tabs.get(tabId, function(tab){
     var lastError = chrome.runtime.lastError;
-    if(tab)
+    if(tab){
       saveTab(tab);
+      update_counter();
+    }
   });
 }
 
@@ -135,6 +138,13 @@ function indexTabContent(tab, content){
   })
 }
 
+function update_counter(size){
+  if(!size)
+    size = Object.keys(tabsDetails).length;
+  if(size)
+    chrome.browserAction.setBadgeText({text: size + ""});
+}
+
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
   if(request.cmd == CMD_RECORD_TAB_IMAGE){
     save(sender.tab.id);
@@ -197,4 +207,5 @@ chrome.tabs.query({currentWindow: true}, function(tabs){
   indexedWindows[tabs[0].windowId] = true;
   indexTabs(tabs);
   indexImages(tabs, 0);
+  update_counter(tabs.length);
 });

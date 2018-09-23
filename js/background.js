@@ -9,6 +9,7 @@ var TABS_DETAILS_TITLE = "title"
 var TABS_DETAILS_ICON = "icon"
 var TABS_DETAILS_URL = "url"
 var TABS_DETAILS_PINNED = "pinned"
+var TABS_DETAILS_WINDOW_ID = "window"
 
 var tabsDetails = {};
 var indexedWindows = {};
@@ -25,7 +26,7 @@ function capturePage(tabId){
   chrome.tabs.captureVisibleTab({quality: 12}, function(screenshotUrl) {
     var lastError = chrome.runtime.lastError;
     if (!lastError) {
-      chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+      chrome.tabs.query({active: true}, function(tabs){
         if(tabs[0].id == tabId)
           saveImage(tabId, screenshotUrl);
         else if(!tabsDetails[tabId] || !tabsDetails[tabId][TABS_DETAILS_IMGAGE])
@@ -42,7 +43,7 @@ function removeAll(){
 function remove(tabId){
   delete tabsDetails[tabId];
   index.remove(tabId);
-  update_counter();
+  updateCounterBadge();
 }
 
 function saveImage(tabId, image){
@@ -64,7 +65,7 @@ function save(tabId){
     var lastError = chrome.runtime.lastError;
     if(tab){
       saveTab(tab);
-      update_counter();
+      updateCounterBadge();
     }
   });
 }
@@ -76,6 +77,7 @@ function saveTab(tab){
   tabDetails[TABS_DETAILS_ICON] = tab.favIconUrl;
   tabDetails[TABS_DETAILS_TITLE] = tab.title;
   tabDetails[TABS_DETAILS_PINNED] = tab.pinned;
+  tabDetails[TABS_DETAILS_WINDOW_ID] = tab.windowId;
   tabDetails[TABS_DETAILS_URL] = extractDomain(tab.url);
   tabsDetails[tab.id] = tabDetails;
   index.add({
@@ -125,6 +127,7 @@ function indexImages(tabs, index){
 
 function indexTabs(tabs){
   for(var i in tabs){
+    indexedWindows[tabs[i].windowId] = true;
     saveTab(tabs[i]);
   }
 }
@@ -138,7 +141,7 @@ function indexTabContent(tab, content){
   })
 }
 
-function update_counter(size){
+function updateCounterBadge(size){
   if(!size)
     size = Object.keys(tabsDetails).length;
   if(size)
@@ -203,9 +206,8 @@ chrome.windows.onFocusChanged.addListener(function(windowId){
 });
 
 // Start Indexing tabs of current window
-chrome.tabs.query({currentWindow: true}, function(tabs){
-  indexedWindows[tabs[0].windowId] = true;
+chrome.tabs.query({}, function(tabs){
   indexTabs(tabs);
-  indexImages(tabs, 0);
-  update_counter(tabs.length);
+  // indexImages(tabs, 0);
+  updateCounterBadge(tabs.length);
 });

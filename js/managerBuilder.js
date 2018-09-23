@@ -7,6 +7,7 @@ var TABS_DETAILS_TITLE = "title"
 var TABS_DETAILS_ICON = "icon"
 var TABS_DETAILS_URL = "url"
 var TABS_DETAILS_PINNED = "pinned"
+var TABS_DETAILS_WINDOW_ID = "window"
 
 var IMG_NO_IMAGE = "img/no-image.png"
 
@@ -28,7 +29,7 @@ function loadOptions(){
 }
 
 function buildWindowTabs(){
-	chrome.tabs.query({currentWindow: true}, function(tabs){
+	chrome.tabs.query({}, function(tabs){
 		var tabsIds = [];
 		for(var i = 0; i < tabs.length; i++)
 			tabsIds[i] = tabs[i].id; 
@@ -38,18 +39,14 @@ function buildWindowTabs(){
 
 function retrieveTabsDetails(tabsIds){
 	chrome.extension.sendMessage({cmd: CMD_GET_TABS_DETAILS, tabsIds: tabsIds, searchText: $("#filter").val()}, function(tabsdDetails){
-		if(Object.keys(tabsdDetails).length == tabsIds.length){
-			loadTabs(tabsdDetails);
-		} else {
+		if(Object.keys(tabsdDetails).length != tabsIds.length)
 			$("#indexing").show();
-			loadTabs(tabsdDetails);
-		}
+		loadTabs(tabsdDetails);
 	});
 } 
 
-function loadTabs(tabsdDetails){
-	var tabsList = buildTabs(tabsdDetails);	
-	document.getElementById('tabsList').innerHTML = tabsList;
+function loadTabs(tabsDetails){
+	document.getElementById('tabsList').innerHTML = buildTabs(tabsDetails);
 	addEvents();
 	$("#filter").focus();
 }
@@ -57,6 +54,16 @@ function loadTabs(tabsdDetails){
 function buildTabs(tabsdDetails){
 	var tabsGroups = groupTabs(tabsdDetails);	
 	var sortedGroups = sortGroups(tabsGroups);
+
+	var windowIdMpping = {};
+	var windowsIndex = 1;
+	for (var i in tabsdDetails) {
+		var windowId = tabsdDetails[i][TABS_DETAILS_WINDOW_ID];
+		if(!windowIdMpping[windowId]){
+			windowIdMpping[windowId] = windowsIndex++;
+		}
+	}
+	var windowsCount = Object.keys(windowIdMpping).length;
 
 	var tabsList = "";
 	for(var i in sortedGroups){
@@ -79,12 +86,19 @@ function buildTabs(tabsdDetails){
 			group = "Pinned Tabs";
 		}
 
+		var groupWindows = {};
+		for (var i in groupTabsDetails)
+			groupWindows[groupTabsDetails[i][TABS_DETAILS_WINDOW_ID]] = 1;
+		var groupWindowsCount = Object.keys(groupWindows).length;		
+
 		var groupSection = '<div class="card">'+
-  								'<div class="card-header '+ classTag +'"><img src="'+ groupIcon +'" class="groupIcon">'+ group +
-  								'<a title="Close Group" class="closeGroup"><span class="fa fa-trash-o" ></span></a>'+
+  								'<div class="card-header '+ classTag +'"><img src="'+ groupIcon +'" class="groupIcon">'+ group;
+  									if(groupWindowsCount == 1 && windowsCount > 1)
+										groupSection += getWindowBadge(windowId, windowIdMpping[Object.keys(groupWindows)[0]]);
+  									groupSection += '<a title="Close Group" class="closeGroup"><span class="fa fa-trash-o" ></span></a>'+
   								'</div>'+
   								'<div class="card-body">'+
-  									buildGroupTabs(groupTabsDetails, isOthersGroup) +
+  									buildGroupTabs(groupTabsDetails, windowIdMpping, groupWindowsCount, isOthersGroup) +
   								'</div>'+
   							'</div>';
   		tabsList += groupSection;
@@ -93,7 +107,7 @@ function buildTabs(tabsdDetails){
     return tabsList;
 }
 
-function buildGroupTabs(groupTabsDetails, isOthersGroup){
+function buildGroupTabs(groupTabsDetails, windowIdMpping, windowsCount, isOthersGroup){
 	var groupSection = "";
 	for (var tabId in groupTabsDetails) {
     	var tabDetails = groupTabsDetails[tabId];
@@ -102,11 +116,14 @@ function buildGroupTabs(groupTabsDetails, isOthersGroup){
 	    	var title = tabDetails[TABS_DETAILS_TITLE];
 	    	var url = tabDetails[TABS_DETAILS_URL];
 	    	var icon = tabDetails[TABS_DETAILS_ICON];
+	    	var windowId = tabDetails[TABS_DETAILS_WINDOW_ID];
 	    	if(thumbnail_size == "")
 	    		thumbnail_size = "medium-thumbnail";
 	        groupSection += '<div class="card item '+ thumbnail_size +'" id="'+ tabId +'">' +
-	        					'<div class="card-body" tabId="'+ tabId +'">'+
-									'<a class="thumbnailImg tab" href="#" >'+
+	        					'<div class="card-body" tabId="'+ tabId +'" windowId="'+ windowId +'">';
+	        						if(windowsCount > 1)
+										groupSection += getWindowBadge(windowId, windowIdMpping[windowId]);
+					groupSection += '<a class="thumbnailImg tab" href="#" >'+
 										'<img src="'+ img +'" />'+
 									'</a>'+
 								'</div>'+	
@@ -117,7 +134,7 @@ function buildGroupTabs(groupTabsDetails, isOthersGroup){
 										groupSection += '<span title="'+ title +'">'+ title +'</span>'+
 									'</div>'+
 									'<div class="control-section">'+
-										'<a tabId="'+ tabId +'" title="Close" class="closeTab"><span class="fa fa-trash-o" ></span></a>'+ 
+										'<a tabId="'+ tabId +'" windowId="'+ windowId +'" title="Close" class="closeTab"><span class="fa fa-trash-o" ></span></a>'+ 
 										'<a class="zoomTab" title="Zoom In" href="'+ img +'" data-lighter><span class="fa fa-arrows-alt" ></span></a>'+		
 									'</div>'+
 								'</div>'+
@@ -125,6 +142,10 @@ function buildGroupTabs(groupTabsDetails, isOthersGroup){
 		}
     }
     return groupSection;
+}
+
+function getWindowBadge(windowId, windowMapping){
+	return '<span class="badge badge-warning window-badge" windowId="'+ windowId +'">Window #'+ windowMapping +'</span>';
 }
 
 function groupTabs(tabsdDetails){
@@ -225,13 +246,24 @@ function addEvents(){
 
 	$(".item .card-body").bind("click", function(e){
 		var tabId = $(this).attr("tabId");
-		chrome.tabs.update(parseInt(tabId), {active: true});
-		window.close();	
+		var windowId = $(this).attr("windowId");
+		activateWindow(windowId, function(){
+			chrome.tabs.update(parseInt(tabId), {active: true});
+			window.close();
+		});
 	});
 
 	$(".closeTab").bind("click", function(tabCloseImage){
-		var id = $(this).attr("tabId");
-		chrome.tabs.remove(parseInt(id));
+		var tabId = $(this).attr("tabId");
+		var windowId = $(this).attr("windowId");
+		activateWindow(windowId, function(){
+			chrome.tabs.remove(parseInt(tabId));
+		});
+	});
+
+	$(".window-badge").bind("click", function(){
+		var windowId = $(this).attr("windowId");
+		activateWindow(windowId, function(){});
 	});
 
 	$(".closeGroup").bind("click", function(){
@@ -249,6 +281,17 @@ function addEvents(){
    			lastSearch = $("#filter").val();
    			load(); 
 		}
+	});
+}
+
+function activateWindow(windowId, callBack){
+	chrome.windows.getCurrent({}, function(w){
+		if(w.id != windowId)
+			chrome.windows.update(parseInt(windowId), {focused: true}, function(){
+				callBack();
+			});	
+		else 
+			callBack();
 	});
 }
 

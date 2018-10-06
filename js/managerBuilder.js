@@ -46,23 +46,18 @@ function retrieveTabsDetails(tabsIds){
 } 
 
 function loadTabs(tabsDetails){
-	document.getElementById('tabsList').innerHTML = buildTabs(tabsDetails);
-	addEvents();
-	$("#filter").focus();
+	getCurrentWindow(function(w){
+		document.getElementById('tabsList').innerHTML = buildTabs(tabsDetails, w.id);
+		addEvents();
+		$("#filter").focus();
+	});
 }
 
-function buildTabs(tabsdDetails){
+function buildTabs(tabsdDetails, currentWindowId){
 	var tabsGroups = groupTabs(tabsdDetails);	
 	var sortedGroups = sortGroups(tabsGroups);
 
-	var windowIdMpping = {};
-	var windowsIndex = 1;
-	for (var i in tabsdDetails) {
-		var windowId = tabsdDetails[i][TABS_DETAILS_WINDOW_ID];
-		if(!windowIdMpping[windowId]){
-			windowIdMpping[windowId] = windowsIndex++;
-		}
-	}
+	var windowIdMpping = getWindowIdMapping(tabsdDetails, currentWindowId);
 	var windowsCount = Object.keys(windowIdMpping).length;
 
 	var tabsList = "";
@@ -107,6 +102,19 @@ function buildTabs(tabsdDetails){
     return tabsList;
 }
 
+function getWindowIdMapping(tabsdDetails, currentWindowId){
+	var windowIdMpping = {};
+	windowIdMpping[currentWindowId] = 1;
+	var windowsIndex = 2;
+	for (var i in tabsdDetails) {
+		var windowId = tabsdDetails[i][TABS_DETAILS_WINDOW_ID];
+		if(!windowIdMpping[windowId]){
+			windowIdMpping[windowId] = windowsIndex++;
+		}
+	}
+	return windowIdMpping;
+}
+
 function buildGroupTabs(groupTabsDetails, windowIdMpping, windowsCount, isOthersGroup){
 	var groupSection = "";
 	for (var tabId in groupTabsDetails) {
@@ -145,7 +153,13 @@ function buildGroupTabs(groupTabsDetails, windowIdMpping, windowsCount, isOthers
 }
 
 function getWindowBadge(windowId, windowMapping){
-	return '<span class="badge badge-warning window-badge" windowId="'+ windowId +'">Window #'+ windowMapping +'</span>';
+	var ele = '<span class="badge badge-warning window-badge" windowId="'+ windowId +'">';
+	if(windowMapping == 1)
+		ele += 'Current Window';
+	else
+		ele += 'Window #'+ windowMapping;
+	ele += '</span>';
+	return ele;
 }
 
 function groupTabs(tabsdDetails){
@@ -285,7 +299,7 @@ function addEvents(){
 }
 
 function activateWindow(windowId, callBack){
-	chrome.windows.getCurrent({}, function(w){
+	getCurrentWindow(function(w){
 		if(w.id != windowId)
 			chrome.windows.update(parseInt(windowId), {focused: true}, function(){
 				callBack();
@@ -293,6 +307,10 @@ function activateWindow(windowId, callBack){
 		else 
 			callBack();
 	});
+}
+
+function getCurrentWindow(callBack){
+	chrome.windows.getCurrent({}, callBack);
 }
 
 function addGlobalEvents(){

@@ -1,6 +1,6 @@
 {
   "name": "Tabs Manager",
-  "version": "1.02",
+  "version": "1.03",
   "description": "Manage your tabs with their thumbnails to have a quick access",
   "options_ui": {
     "page": "options.html",
@@ -34,7 +34,8 @@
   "commands": {
     "_execute_browser_action": {
       "suggested_key": {
-        "default": "Ctrl+Shift+F"
+        "default": "Ctrl+Shift+F",
+        "mac": "Ctrl+Shift+T"
       },
       "description": "Open Tabs manager on search mode"
     }

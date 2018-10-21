@@ -60,6 +60,10 @@ function buildTabs(tabsdDetails, currentWindowId){
 	var windowIdMpping = getWindowIdMapping(tabsdDetails, currentWindowId);
 	var windowsCount = Object.keys(windowIdMpping).length;
 
+	var windowId;
+	for (var i in tabsdDetails)
+		windowId = tabsdDetails[i][TABS_DETAILS_WINDOW_ID];
+
 	var tabsList = "";
 	for(var i in sortedGroups){
 		var group = sortedGroups[i];

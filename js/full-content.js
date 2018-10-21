@@ -9,21 +9,20 @@
 var CMD_RECORD_TAB_IMAGE = "recordTab";
 var CMD_INDEX_TAB = "indexTab";
 var IMAGE_QUALITY = 0.5;
-var DOM_LIMIT = 5000;
+var DOM_LIMIT = 8000;
 
 var text = getText("h1") + getText("h2") + getText("h3") + getText("h4") + getText("h5");
 chrome.runtime.sendMessage({cmd: CMD_INDEX_TAB, content: text});
 
-if (document.hidden
-	&& document.getElementsByTagName("*").length <= DOM_LIMIT){ // Fix me issue https://github.com/niklasvh/html2canvas/issues/835
+if (document.getElementsByTagName("*").length <= DOM_LIMIT){ // Fix me issue https://github.com/niklasvh/html2canvas/issues/835
 	html2canvas(document.body, {
 		useCORS: true,
 	    width: width(),
 	    height: height()}
 	).then(function(canvas) {
-	        var myImage = canvas.toDataURL("image/jpeg", IMAGE_QUALITY);
-	        chrome.runtime.sendMessage({cmd: CMD_RECORD_TAB_IMAGE, image: myImage});
-	    });
+        var myImage = canvas.toDataURL("image/jpeg", IMAGE_QUALITY);
+        chrome.runtime.sendMessage({cmd: CMD_RECORD_TAB_IMAGE, image: myImage});
+    });
 }
 
 function getText(tag){

@@ -22,16 +22,21 @@ var index = lunr(function () {
 })
 
 function capturePage(tabId){
-  save(tabId)
+  save(tabId);
   chrome.tabs.captureVisibleTab({quality: 12}, function(screenshotUrl) {
     var lastError = chrome.runtime.lastError;
     if (!lastError) {
       chrome.tabs.query({active: true}, function(tabs){
         if(tabs[0].id == tabId)
           saveImage(tabId, screenshotUrl);
-        else if(!tabsDetails[tabId] || !tabsDetails[tabId][TABS_DETAILS_IMGAGE])
-          chrome.tabs.get(tabId, function(tab){ indexImages(Array(tab), 0)});
+        else {
+          capturePage(tabs[0].id);
+          if(!tabsDetails[tabId] || !tabsDetails[tabId][TABS_DETAILS_IMGAGE])
+            chrome.tabs.get(tabId, function(tab){ captureTabImageManualy(tab) });
+        }
       });
+    } else{
+      chrome.tabs.get(tabId, function(tab){ captureTabImageManualy(tab) });
     }
   });
 }
@@ -113,22 +118,17 @@ function extractDomain(url) {
     return domain;
 }
 
-function indexImages(tabs, index){
-  if(index >= tabs.length)
-    return;
-  var tab = tabs[index];
-  chrome.tabs.executeScript(tab.id, {file: "js/full-content.js"}, function(){
-    var lastError = chrome.runtime.lastError;
-    if(lastError && tab.active)
-      capturePage(tab.id);
-    indexImages(tabs, index + 1);
-  });
+function captureTabImageManualy(tab){
+  var url = tab.url;
+  if(url.indexOf("chrome://") != 0)
+    chrome.tabs.executeScript(tab.id, {file: "js/full-content.js"});
 }
 
 function indexTabs(tabs){
   for(var i in tabs){
     indexedWindows[tabs[i].windowId] = true;
     saveTab(tabs[i]);
+    captureTabImageManualy(tabs[i]);
   }
 }
 
@@ -201,13 +201,11 @@ chrome.windows.onFocusChanged.addListener(function(windowId){
   if(windowId != chrome.windows.WINDOW_ID_NONE && !indexedWindows[windowId])
     chrome.tabs.query({windowId: windowId}, function(tabs){
       indexTabs(tabs);
-      indexImages(tabs, 0);
     });
 });
 
-// Start Indexing tabs of current window
+// Start Indexing tabs of all windows
 chrome.tabs.query({}, function(tabs){
   indexTabs(tabs);
-  // indexImages(tabs, 0);
   updateCounterBadge(tabs.length);
 });

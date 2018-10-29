@@ -1,6 +1,6 @@
 {
   "name": "Tabs Manager",
-  "version": "1.6",
+  "version": "1.7",
   "description": "Manage your tabs with their thumbnails to have a quick access",
   "options_ui": {
     "page": "options.html",
@@ -13,6 +13,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
+      "exclude_globs": ["*youtube*"],
       "js": ["/js/full-content.js"]
     }
   ],

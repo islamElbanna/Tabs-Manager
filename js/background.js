@@ -120,7 +120,7 @@ function extractDomain(url) {
 
 function captureTabImageManualy(tab){
   var url = tab.url;
-  if(url.indexOf("chrome://") != 0 && url.indexOf("chrome-extension://") != 0)
+  if(url.indexOf("chrome://") < 0 && url.indexOf("chrome-extension://") < 0 && url.indexOf("youtube.com") < 0)
     chrome.tabs.executeScript(tab.id, {file: "js/full-content.js"});
 }
 

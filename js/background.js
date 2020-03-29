@@ -13,6 +13,7 @@ var TABS_DETAILS_WINDOW_ID = "window"
 
 var tabsDetails = {};
 var indexedWindows = {};
+var loadingImg = {};
 
 var index = lunr(function () {
   this.field('url', {boost: 10});
@@ -32,11 +33,11 @@ function capturePage(tabId){
         else {
           capturePage(tabs[0].id);
           if(!tabsDetails[tabId] || !tabsDetails[tabId][TABS_DETAILS_IMGAGE])
-            chrome.tabs.get(tabId, function(tab){ captureTabImageManualy(tab) });
+            chrome.tabs.get(tabId, captureTabImageManualy);
         }
       });
     } else{
-      chrome.tabs.get(tabId, function(tab){ captureTabImageManualy(tab) });
+      chrome.tabs.get(tabId, captureTabImageManualy);
     }
   });
 }
@@ -53,6 +54,7 @@ function remove(tabId){
 
 function saveImage(tabId, image){
   if(image){
+    loadingImg[tabId] = 0;
     var tabDetails = {};
     if(tabsDetails[tabId])
       tabDetails = tabsDetails[tabId];
@@ -118,18 +120,38 @@ function extractDomain(url) {
     return domain;
 }
 
-function captureTabImageManualy(tab){
+function captureTabImageManualy(tab, callback){
+  if(loadingImg[tab.id] > 0)
+    return;
   var url = tab.url;
-  if(url.indexOf("chrome://") < 0 && url.indexOf("chrome-extension://") < 0 && url.indexOf("youtube.com") < 0)
-    chrome.tabs.executeScript(tab.id, {file: "js/full-content.js"});
+  if(url.indexOf("chrome://") == -1 
+    && url.indexOf("chrome-extension://") == -1 
+    && url.indexOf("chrome-search://") == -1
+    && url.indexOf("youtube.com") == -1){
+    console.log("Loading tab: " + tab.id);
+    loadingImg[tab.id]++;
+    chrome.tabs.executeScript(tab.id, {file: "js/full-content.js"}, callback);
+  }
 }
 
 function indexTabs(tabs){
   for(var i in tabs){
     indexedWindows[tabs[i].windowId] = true;
     saveTab(tabs[i]);
-    captureTabImageManualy(tabs[i]);
   }
+
+  load_tab_img(tabs, 0);
+}
+
+function load_tab_img(tabs, index){
+  if(index >= tabs.length){
+    return;
+  }
+
+  captureTabImageManualy(tabs[index], function(){
+    loadingImg[tabs[index].id] = 0;
+    load_tab_img(tabs, index++);
+  });
 }
 
 function indexTabContent(tab, content){
@@ -178,10 +200,6 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
     }
     sendResponse(requestedTabsDetails);  
   }
-});
-
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab){
-  capturePage(tabId);
 });
 
 chrome.tabs.onActivated.addListener(function(activeInfo){

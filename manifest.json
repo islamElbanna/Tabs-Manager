@@ -1,6 +1,6 @@
 {
   "name": "Tabs Manager",
-  "version": "1.9",
+  "version": "2.0",
   "description": "Manage your tabs with their thumbnails to have a quick access",
   "options_ui": {
     "page": "options.html",

@@ -150,7 +150,7 @@ function load_tab_img(tabs, index){
 
   captureTabImageManualy(tabs[index], function(){
     loadingImg[tabs[index].id] = 0;
-    load_tab_img(tabs, index++);
+    load_tab_img(tabs, ++index);
   });
 }
 

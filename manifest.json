@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Tabs Manager",
-  "version": "2.3",
+  "version": "2.4",
   "description": "Quick overview for your opened tabs in different windows, with the ability to search and check thumbnails for each tab in one view",
   "options_ui": {
     "page": "options.html",

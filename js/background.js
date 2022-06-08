@@ -24,26 +24,19 @@ var index = lunr(function () {
 
 function capturePage(tabId){
   save(tabId);
-  chrome.tabs.captureVisibleTab({quality: 12}, function(screenshotUrl) {
+  chrome.tabs.captureVisibleTab({quality: 1}, function(screenshotUrl) {
     var lastError = chrome.runtime.lastError;
     if (!lastError) {
       chrome.tabs.query({active: true}, function(tabs){
         if(tabs[0].id == tabId)
           saveImage(tabId, screenshotUrl);
-        else {
+        else if(!tabsDetails[tabId] || !tabsDetails[tabId][TABS_DETAILS_IMGAGE])
           capturePage(tabs[0].id);
-          if(!tabsDetails[tabId] || !tabsDetails[tabId][TABS_DETAILS_IMGAGE])
-            chrome.tabs.get(tabId, captureTabImageManualy);
-        }
       });
     } else{
       chrome.tabs.get(tabId, captureTabImageManualy);
     }
   });
-}
-
-function removeAll(){
-  tabsDetails = {};
 }
 
 function remove(tabId){
@@ -55,13 +48,15 @@ function remove(tabId){
 function saveImage(tabId, image){
   if(image){
     loadingImg[tabId] = 0;
-    var tabDetails = {};
+    let tabDetails = {};
     if(tabsDetails[tabId])
       tabDetails = tabsDetails[tabId];
     tabDetails[TABS_DETAILS_IMGAGE] = image;
     tabsDetails[tabId] = tabDetails;
     chrome.runtime.sendMessage({cmd: CMD_UPDATE_IMAGE, tabId: tabId, img: image}, function(){
-      var lastError = chrome.runtime.lastError;
+      if (chrome.runtime.lastError) {
+        console.debug("No one to get the message of: " + CMD_UPDATE_IMAGE);
+      }
     });
     save(tabId);
   }
@@ -78,7 +73,7 @@ function save(tabId){
 }
 
 function saveTab(tab){
-  var tabDetails = {};
+  let tabDetails = {};
   if(tabsDetails[tab.id])
     tabDetails = tabsDetails[tab.id];
   tabDetails[TABS_DETAILS_ICON] = tab.favIconUrl;
@@ -95,7 +90,7 @@ function saveTab(tab){
 }
 
 function extractDomain(url) {
-    var domain;
+    let domain;
 
     if(!url)
       return "Other";
@@ -123,34 +118,29 @@ function extractDomain(url) {
 function captureTabImageManualy(tab, callback){
   if(loadingImg[tab.id] > 0)
     return;
-  var url = tab.url;
+  let url = tab.url;
   if(url.indexOf("chrome://") == -1 
     && url.indexOf("chrome-extension://") == -1 
     && url.indexOf("chrome-search://") == -1
     && url.indexOf("youtube.com") == -1){
-    console.log("Loading tab: " + tab.id);
+    console.debug("Loading tab: " + tab.id + ", url: " + url);
     loadingImg[tab.id]++;
     chrome.tabs.executeScript(tab.id, {file: "js/full-content.js"}, callback);
   }
 }
 
 function indexTabs(tabs){
-  for(var i in tabs){
-    indexedWindows[tabs[i].windowId] = true;
-    saveTab(tabs[i]);
+  for(let i in tabs){
+    let tab = tabs[i];
+    indexedWindows[tab.windowId] = true;
+    saveTab(tab);
+    load_tab_img(tab);
   }
-
-  load_tab_img(tabs, 0);
 }
 
-function load_tab_img(tabs, index){
-  if(index >= tabs.length){
-    return;
-  }
-
-  captureTabImageManualy(tabs[index], function(){
-    loadingImg[tabs[index].id] = 0;
-    load_tab_img(tabs, ++index);
+function load_tab_img(tab){
+  return captureTabImageManualy(tab, function(){
+    loadingImg[tab.id] = 0;
   });
 }
 
@@ -173,32 +163,28 @@ function updateCounterBadge(size){
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
   if(request.cmd == CMD_RECORD_TAB_IMAGE){
     save(sender.tab.id);
-    saveImage(sender.tab.id, request.image)
+    saveImage(sender.tab.id, request.image);
   } if(request.cmd == CMD_INDEX_TAB){
     indexTabContent(sender.tab, request.content);
   } else if(request.cmd == CMD_GET_TABS_DETAILS){
-    var requestedIds = request.tabsIds;
+    let requestedIds = request.tabsIds;
     if(request.searchText && request.searchText != ""){
-      var filteredPages = index.search(request.searchText);
-      var flags = {};
-      for (var i = 0; i< filteredPages.length; i++)
-        flags[filteredPages[i].ref] = true;
-
-      var filteredTabs = [];
-      for (var i = 0; i< requestedIds.length; i++) {
-        if(flags[requestedIds[i]]){
-          filteredTabs.push(requestedIds[i]);
+      let filteredPages = index.search(request.searchText);
+      let filteredTabs = [];
+      for (let i = 0; i< filteredPages.length; i++) {
+        if(requestedIds.includes(filteredPages[i].ref)){
+          filteredTabs.push(filteredPages[i].ref);
         }
       }
       requestedIds = filteredTabs;
     }
-    var requestedTabsDetails = {};
-    for (var i = 0; i< requestedIds.length; i++) {
-      var tabId = requestedIds[i];
+    let requestedTabsDetails = {};
+    for (let i = 0; i< requestedIds.length; i++) {
+      let tabId = requestedIds[i];
       if(tabsDetails[tabId])
         requestedTabsDetails[tabId] = tabsDetails[tabId];
     }
-    sendResponse(requestedTabsDetails);  
+    sendResponse(requestedTabsDetails);
   }
 });
 
@@ -208,7 +194,15 @@ chrome.tabs.onActivated.addListener(function(activeInfo){
 
 chrome.tabs.onRemoved.addListener(function(tabId, removeInfo){
   remove(tabId);
-  chrome.runtime.sendMessage({cmd: CMD_REMOVE_TAB, tabId: tabId});
+  chrome.runtime.sendMessage({cmd: CMD_REMOVE_TAB, tabId: tabId}, function(){
+    if (chrome.runtime.lastError) {
+      console.debug("No one to get the message of: " + CMD_REMOVE_TAB);
+    }
+  });
+});
+
+chrome.tabs.onMoved.addListener(function(tabId){
+  save(tabId);
 });
 
 chrome.tabs.onZoomChange.addListener(function(ZoomChangeInfo){

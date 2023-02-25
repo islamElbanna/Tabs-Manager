@@ -21,12 +21,10 @@
 //=====================================================================================================================
 
 var CMD_RECORD_TAB_IMAGE = "recordTab";
-var CMD_INDEX_TAB = "indexTab";
 var IMAGE_QUALITY = 0.1;
 var DOM_LIMIT = 7000;
 
-var text = getText("title") + getText("h1") + getText("h2") + getText("h3") + getText("h4") + getText("h5");
-chrome.runtime.sendMessage({cmd: CMD_INDEX_TAB, content: text});
+console.debug("Running full-content again");
 
 if (document.getElementsByTagName("*").length <= DOM_LIMIT){ // Fix me issue https://github.com/niklasvh/html2canvas/issues/835
 	html2canvas(document.body, {

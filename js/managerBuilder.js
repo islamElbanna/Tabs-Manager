@@ -38,10 +38,30 @@ function buildWindowTabs(){
 }
 
 function retrieveTabsDetails(tabsIds){
-	chrome.extension.sendMessage({cmd: CMD_GET_TABS_DETAILS, tabsIds: tabsIds, searchText: $("#filter").val()}, function(tabsdDetails){
-		if(Object.keys(tabsdDetails).length != tabsIds.length)
+	chrome.runtime.sendMessage({cmd: CMD_GET_TABS_DETAILS, tabsIds: tabsIds}, function(tabsDetails){
+		if(Object.keys(tabsDetails).length != tabsIds.length)
 			$("#indexing").show();
-		loadTabs(tabsdDetails);
+		if($("#filter").val()) {
+			var index = lunr(function () {
+				this.field('url', {boost: 10});
+				this.field('title', {boost: 5});
+				this.ref('id');
+			});
+			for(let i in tabsDetails){
+				let tab = tabsDetails[i];
+				index.add({
+					id: i,
+					title: tab[TABS_DETAILS_TITLE],
+					url: tab[TABS_DETAILS_URL]
+				});
+			}
+			let filteredTabs = index.search($("#filter").val());
+			let toBeRemoved = Object.keys(tabsDetails).filter(n => !filteredTabs.map(k => k.ref).includes(n));
+			for (let i in toBeRemoved) {
+				delete tabsDetails[toBeRemoved[i]];
+			}
+		}
+		loadTabs(tabsDetails);
 	});
 } 
 
@@ -320,7 +340,7 @@ function getCurrentWindow(callBack){
 
 function addGlobalEvents(){
 	// Server
-	chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
+	chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 	  if(request.cmd == CMD_UPDATE_IMAGE){
 	    let tabId = request.tabId;
 	    let img = request.img;

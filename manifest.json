@@ -1,17 +1,16 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Tabs Manager",
-  "version": "2.4",
-  "description": "Quick overview for your opened tabs in different windows, with the ability to search and check thumbnails for each tab in one view",
+  "version": "2.5",
+  "description": "A Quick overview for your opened tabs across windows, with the ability to search and check thumbnails for each tab in one view",
   "options_ui": {
     "page": "options.html",
     "open_in_tab": false
   },
-  "background": {
-    "persistent": true,
-    "scripts": ["/js/lib/lunr.min.js", "/js/background.js"]
+  "background": { 
+    "service_worker": "/js/background.js"
   },
-  "browser_action": {
+  "action": {
     "default_icon": "/img/icon_128.png",
     "default_title": "Tabs Manager",
     "default_popup": "index.html"
@@ -19,7 +18,9 @@
   "permissions": [
     "tabs",
     "activeTab",
-    "storage",
+    "storage"
+  ],
+  "host_permissions": [
     "<all_urls>"
   ],
   "icons": { 
@@ -27,8 +28,14 @@
     "48": "/img/icon_48.png",
     "128": "/img/icon_128.png" 
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/full-content.js"]
+    }
+  ],
   "commands": {
-    "_execute_browser_action": {
+    "_execute_action": {
       "suggested_key": {
         "default": "Ctrl+Shift+F",
         "mac": "Ctrl+Shift+Q"

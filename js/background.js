@@ -9,6 +9,9 @@ var TABS_DETAILS_ICON = "icon"
 var TABS_DETAILS_URL = "url"
 var TABS_DETAILS_PINNED = "pinned"
 var TABS_DETAILS_WINDOW_ID = "window"
+var TABS_DETAILS_ACTIVE_TIME = "activeTime"
+var TABS_DETAILS_TAB_ID = "tabId"
+
 
 function setTabDetails(tabId, tabDetails) {
   chrome.storage.local.set({ [tabId.toString()]: tabDetails});
@@ -104,12 +107,13 @@ function save(tabId){
 function saveTab(tab){
   getTabDetails(tab.id, (tabDetails) => {
     if(!tabDetails)
-      tabDetails = {};
+      tabDetails = {TABS_DETAILS_ACTIVE_TIME:0};
     tabDetails[TABS_DETAILS_ICON] = tab.favIconUrl;
     tabDetails[TABS_DETAILS_TITLE] = tab.title;
     tabDetails[TABS_DETAILS_PINNED] = tab.pinned;
     tabDetails[TABS_DETAILS_WINDOW_ID] = tab.windowId;
     tabDetails[TABS_DETAILS_URL] = extractDomain(tab.url);
+    tabDetails[TABS_DETAILS_TAB_ID] = tab.id;
     setTabDetails(tab.id, tabDetails);
   });
 }
@@ -167,6 +171,21 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
 chrome.tabs.onActivated.addListener(function(activeInfo){
   capturePage(activeInfo.tabId);
+
+  //update activate time
+  let tabId = activeInfo.tabId;
+  getTabDetails(tabId, (tabDetails) => {
+    if (!tabDetails)
+      tabDetails = {};
+    let time = +new Date();
+    console.log("update active time : tabId:, time :", tabId, time)
+    tabDetails[TABS_DETAILS_ACTIVE_TIME] = time;
+
+    setTimeout(()=>{
+      setTabDetails(tabId, tabDetails);
+      getTabDetails(tabId, (d)=>{console.log("get storage :", d)})
+    },200)
+  });
 });
 
 chrome.tabs.onRemoved.addListener(function(tabId, removeInfo){

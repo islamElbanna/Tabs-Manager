@@ -170,10 +170,21 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });
 
 chrome.tabs.onActivated.addListener(function(activeInfo){
-  capturePage(activeInfo.tabId);
+  let tabId = activeInfo.tabId;
+
+  chrome.tabs.captureVisibleTab({quality: 1}, function(screenshotUrl) {
+    var lastError = chrome.runtime.lastError;
+    if (!lastError) {
+      chrome.tabs.query({active: true}, function(tabs){
+        let currentTabId = tabs[0].id;
+        if(currentTabId == tabId)
+          saveImage(tabId, screenshotUrl);
+      });
+    }
+  });
 
   //update activate time
-  let tabId = activeInfo.tabId;
+
   getTabDetails(tabId, (tabDetails) => {
     if (!tabDetails)
       tabDetails = {};
@@ -181,10 +192,10 @@ chrome.tabs.onActivated.addListener(function(activeInfo){
     console.log("update active time : tabId:, time :", tabId, time)
     tabDetails[TABS_DETAILS_ACTIVE_TIME] = time;
 
-    setTimeout(()=>{
-      setTabDetails(tabId, tabDetails);
-      getTabDetails(tabId, (d)=>{console.log("get storage :", d)})
-    },200)
+    // setTimeout(()=>{
+    setTabDetails(tabId, tabDetails);
+    getTabDetails(tabId, (d)=>{console.log("get storage :", d)})
+    // },20)
   });
 });
 

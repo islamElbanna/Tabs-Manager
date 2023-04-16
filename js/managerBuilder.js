@@ -195,7 +195,9 @@ function groupTabs(tabsdDetails) {
     let tabsGroups = {};
     let pinnedGroup = {};
 
-    let arr = Object.values(tabsdDetails).sort((a,b)=>{return b[TABS_DETAILS_ACTIVE_TIME]- a[TABS_DETAILS_ACTIVE_TIME]});
+    let arr = Object.values(tabsdDetails)
+        .filter(d=>{return d[TABS_DETAILS_ACTIVE_TIME]})
+        .sort((a,b)=>{return b[TABS_DETAILS_ACTIVE_TIME]- a[TABS_DETAILS_ACTIVE_TIME]});
 
     console.log("latest tabs : ", arr)
     for(let i in arr.slice(0,6)){

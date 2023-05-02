@@ -1,0 +1,2 @@
+- Create an issue explaining the problem and the suggested solution if possible.
+- Create a PR with your changes and mention the issue id.

@@ -155,7 +155,7 @@ function buildGroupTabs(groupTabsDetails, windowIdMpping, windowsCount, isOthers
             if (thumbnail_size == "")
                 thumbnail_size = "medium-thumbnail";
             groupSection += '<div class="card item ' + thumbnail_size + '" id="' + tabId + '">' +
-                '<div class="card-body" tabId="' + tabId + '" windowId="' + windowId + '">';
+                '<div class="card-body card" tabId="' + tabId + '" windowId="' + windowId + '">';
             if (windowsCount > 1) {
                 groupSection += getWindowBadge(windowId, windowIdMpping[windowId]);
             }

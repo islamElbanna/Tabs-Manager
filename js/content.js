@@ -1,8 +1,8 @@
 var CMD_RECORD_TAB_IMAGE = "recordTab";
-var IMAGE_QUALITY = 0.5;
+var IMAGE_QUALITY = 1.0;
 var DOM_LIMIT = 7000;
 
-console.debug("Running full-content again");
+console.debug("Running content again");
 
 if (document.getElementsByTagName("*").length <= DOM_LIMIT) { // Fix me issue https://github.com/niklasvh/html2canvas/issues/835
     html2canvas(document.body, {

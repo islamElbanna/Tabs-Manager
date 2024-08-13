@@ -1,12 +1,9 @@
 {
     "manifest_version": 3,
     "name": "Tabs Manager",
-    "version": "2.6",
+    "version": "2.7",
     "description": "A Quick overview for your opened tabs across windows, with the ability to search and check thumbnails for each tab in one view",
-    "options_ui": {
-        "page": "options.html",
-        "open_in_tab": false
-    },
+    "options_page": "options.html",
     "background": {
         "service_worker": "/js/background.js"
     },
@@ -30,7 +27,7 @@
     },
     "content_scripts": [{
         "matches": ["<all_urls>"],
-        "js": ["js/lib/html2canvas.min.js", "js/full-content.js"]
+        "js": ["js/lib/html2canvas.min.js", "js/content.js"]
     }],
     "commands": {
         "_execute_action": {

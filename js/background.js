@@ -60,12 +60,26 @@ function capturePage(tabId) {
     console.log('Capture Visible Tab; ' + tabId);
     save(tabId);
     chrome.tabs.captureVisibleTab({ quality: 1 }, function(screenshotUrl) {
+        console.log('captureVisibleTab; ' + screenshotUrl);
         var lastError = chrome.runtime.lastError;
         if (!lastError) {
             chrome.tabs.query({ active: true }, function(tabs) {
                 let currentTabId = tabs[0].id;
                 if (currentTabId == tabId) {
                     saveImage(tabId, screenshotUrl);
+                }
+            });
+        } else {
+            console.log('ERROR; ' + lastError);
+            getTabDetails(tabId, function(tabDetails){
+                if(!tabDetails[TABS_DETAILS_IMGAGE]) {
+                    // Capture the image from the page itself.
+                    chrome.scripting.executeScript(
+                        {
+                            injectImmediately: true,
+                            target: {tabId: tabId},
+                            files: ["js/lib/html2canvas.min.js", "js/content.js"]
+                        });
                 }
             });
         }

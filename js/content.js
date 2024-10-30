@@ -1,6 +1,7 @@
 var CMD_RECORD_TAB_IMAGE = "recordTab";
 var IMAGE_QUALITY = 1.0;
 var DOM_LIMIT = 7000;
+var IMG_NO_IMAGE = "img/no-image.png"
 
 console.debug("Running content again");
 
@@ -16,7 +17,13 @@ if (document.getElementsByTagName("*").length <= DOM_LIMIT) { // Fix me issue ht
     }).then(function(canvas) {
         var myImage = canvas.toDataURL("image/jpeg", IMAGE_QUALITY);
         chrome.runtime.sendMessage({ cmd: CMD_RECORD_TAB_IMAGE, image: myImage });
+    }).catch(function (error) {
+        console.error('oops, something went wrong!', error);
+        chrome.runtime.sendMessage({ cmd: CMD_RECORD_TAB_IMAGE, image: IMG_NO_IMAGE });
     });
+} else {
+    console.log('Can not index this page as that exceeds the dom limit of + ' + DOM_LIMIT);
+    chrome.runtime.sendMessage({ cmd: CMD_RECORD_TAB_IMAGE, image: IMG_NO_IMAGE });
 }
 
 function getText(tag) {

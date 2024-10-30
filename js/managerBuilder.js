@@ -9,7 +9,7 @@ var TABS_DETAILS_URL = "url"
 var TABS_DETAILS_PINNED = "pinned"
 var TABS_DETAILS_WINDOW_ID = "window"
 
-var IMG_NO_IMAGE = "img/no-image.png"
+var IMG_LOADING_IMAGE = "img/loading-image.gif"
 
 var lastSearch = "";
 var thumbnail_size = ""
@@ -256,7 +256,7 @@ function getGroupIcon(groupName, groupTabsDetails) {
 
 function getImage(img) {
     if (!img || img == "NoImage")
-        img = IMG_NO_IMAGE;
+        img = IMG_LOADING_IMAGE;
     return img;
 }
 

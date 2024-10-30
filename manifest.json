@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Tabs Manager",
-    "version": "2.8",
+    "version": "2.9",
     "description": "A Quick overview for your opened tabs across windows, with the ability to search and check thumbnails for each tab in one view",
     "options_page": "options.html",
     "background": {
@@ -15,7 +15,8 @@
     "permissions": [
         "tabs",
         "activeTab",
-        "storage"
+        "storage",
+        "scripting"
     ],
     "host_permissions": [
         "<all_urls>"

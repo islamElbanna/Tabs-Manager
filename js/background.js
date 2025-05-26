@@ -1,69 +1,82 @@
-var CMD_UPDATE_IMAGE = "updateImage"
-var CMD_GET_TABS_DETAILS = "getTabs"
-var CMD_REMOVE_TAB = "removeTab"
-var CMD_RECORD_TAB_IMAGE = "recordTab"
+// =====================
+// Constants
+// =====================
+const CMD_UPDATE_IMAGE = "updateImage";
+const CMD_GET_TABS_DETAILS = "getTabs";
+const CMD_REMOVE_TAB = "removeTab";
+const CMD_RECORD_TAB_IMAGE = "recordTab";
 
-var TABS_DETAILS_IMGAGE = "img"
-var TABS_DETAILS_IMGAGE_LOADING = "loading"
-var TABS_DETAILS_TITLE = "title"
-var TABS_DETAILS_ICON = "icon"
-var TABS_DETAILS_URL = "url"
-var TABS_DETAILS_PINNED = "pinned"
-var TABS_DETAILS_WINDOW_ID = "window"
+const TABS_DETAILS_IMAGE = "img";
+const TABS_DETAILS_IMAGE_LOADING = "loading";
+const TABS_DETAILS_TITLE = "title";
+const TABS_DETAILS_ICON = "icon";
+const TABS_DETAILS_URL = "url";
+const TABS_DETAILS_PINNED = "pinned";
+const TABS_DETAILS_WINDOW_ID = "window";
 
-var IMG_NO_IMAGE = "img/no-image.png"
-var MAX_IMG_RETRIES = 3;
+const IMG_NO_IMAGE = "img/no-image.png";
+const MAX_IMG_RETRIES = 3;
 
-function isDefined(v) {
-    return typeof v !== 'undefined' && v !== NaN;
-}
+// =====================
+// Utility Functions
+// =====================
+const isDefined = v => typeof v !== 'undefined' && v !== NaN;
 
-function updateTabDetails(tabId, updates) {
-    getTabDetails(tabId, (tabDetails) => {
-        Object.keys(updates).forEach(key => {
-            tabDetails[key] = updates[key];
-        });
-        setTabDetails(tabId, tabDetails);
-    });
-}
+const extractDomain = url => {
+    if (!url) return "Other";
+    let domain = url;
+    if (url.includes("chrome-extension://")) {
+        domain = url.split('chrome-extension://')[1];
+    }
+    if (domain.includes('://')) {
+        domain = domain.split('://')[1];
+    }
+    if (domain.includes('/')) {
+        domain = domain.split('/')[0];
+    }
+    return domain.split(':')[0];
+};
 
+// =====================
+// Tab Details Storage
+// =====================
 function setTabDetails(tabId, tabDetails) {
-    chrome.storage.local.set({
-        [tabId.toString()]: tabDetails
-    });
+    chrome.storage.local.set({ [tabId.toString()]: tabDetails });
 }
 
 function getTabsDetails(tabIds, callback) {
-    let keys = [];
-    tabIds.forEach((tabId, i) => {
-        if (tabId) {
-            keys.push(tabId.toString());
-        }
-    });
-    return chrome.storage.local.get(keys).then(function(details){
-        keys.forEach((key, j) => {
-            if (!details[key])
-                details[key] = {};
-        });
+    const keys = tabIds.filter(Boolean).map(id => id.toString());
+    chrome.storage.local.get(keys).then(details => {
+        keys.forEach(key => { if (!details[key]) details[key] = {}; });
         callback(details);
     });
 }
 
 function getTabDetails(tabId, callback) {
-    return getTabsDetails([tabId], (tabsDetails) => {
-        if(tabId) {
-            callback(tabsDetails[tabId.toString()]);
-        }
+    getTabsDetails([tabId], tabsDetails => {
+        if (tabId) callback(tabsDetails[tabId.toString()]);
     });
 }
 
+function updateTabDetails(tabId, updates) {
+    getTabDetails(tabId, tabDetails => {
+        Object.assign(tabDetails, updates);
+        setTabDetails(tabId, tabDetails);
+    });
+}
+
+function removeTabDetails(tabId) {
+    console.debug("Removing tab details: " + tabId);
+    chrome.storage.local.remove(tabId.toString());
+}
+
 function cleanTabDetails() {
-    chrome.storage.local.get(null, (details) => {
+    chrome.storage.local.get(null, details => {
         Object.keys(details).forEach(tabId => {
-            if(tabId) {
-                let id = parseInt(tabId);
-                chrome.tabs.get(id).catch(function(lastError) {
-                    console.debug("Tab Id not found: " + tabId, lastError)
+            if (tabId) {
+                const id = parseInt(tabId);
+                chrome.tabs.get(id).catch(lastError => {
+                    console.debug("Tab Id not found: " + tabId, lastError);
                     removeTabDetails(id);
                 });
             }
@@ -71,82 +84,74 @@ function cleanTabDetails() {
     });
 }
 
-function removeTabDetails(tabId) {
-    console.debug("Removing tab details: " + tabId);
-    return chrome.storage.local.remove(tabId.toString());
+// =====================
+// Tab Image Handling
+// =====================
+function saveImage(tabId, image) {
+    if (!image) return;
+    console.debug("Got image for tab: " + tabId);
+    getTabDetails(tabId, tabDetails => {
+        if (image === IMG_NO_IMAGE && tabDetails[TABS_DETAILS_IMAGE]) {
+            image = tabDetails[TABS_DETAILS_IMAGE];
+        }
+        updateTabDetails(tabId, {
+            [TABS_DETAILS_IMAGE_LOADING]: false,
+            [TABS_DETAILS_IMAGE]: image,
+        });
+    });
+    chrome.runtime.sendMessage({
+        cmd: CMD_UPDATE_IMAGE,
+        tabId,
+        img: image
+    }).catch(lastError => {
+        console.debug("No one to get the message of: " + CMD_UPDATE_IMAGE, lastError);
+    });
 }
 
 function capturePage(tabId) {
     console.debug('Capture Visible Tab; ' + tabId);
-    chrome.tabs.captureVisibleTab({ 
-        quality: 1, 
+    chrome.tabs.captureVisibleTab({
+        quality: 1,
         format: "jpeg"
-    }).then(function(screenshotUrl) {
-        chrome.tabs.query({ active: true }, function(tabs) {
-            let currentTabId = tabs[0].id;
-            if (currentTabId == tabId) {
+    }).then(screenshotUrl => {
+        chrome.tabs.query({ active: true }, tabs => {
+            if (tabs[0].id === tabId) {
                 saveImage(tabId, screenshotUrl);
             }
         });
-    }).catch(function (lastError) {
+    }).catch(lastError => {
         console.debug('oops, something went wrong!', lastError);
         indexTabImage(tabId);
     });
 }
 
-function indexTabImage(tabId){
-    getTabDetails(tabId, function(tabDetails){
-        if(!retryManualImgCapture(tabDetails)) {
-            // Tab has image, so skip updating it since it is a heavy operation.
-            return;
-        }
-
+function indexTabImage(tabId) {
+    getTabDetails(tabId, tabDetails => {
+        if (!retryManualImgCapture(tabDetails)) return;
         // Capture the image from the page itself.
         console.debug("Manually capture tab image: " + tabId);
         chrome.scripting.executeScript({
-            target: {tabId: tabId},
+            target: { tabId },
             files: ["js/lib/html2canvas.min.js", "js/content.js"]
-        }).then(function(){
-            updateTabDetails(tabId, {[TABS_DETAILS_IMGAGE_LOADING]: true});
-        }).catch(function (error) {
+        }).then(() => {
+            updateTabDetails(tabId, { [TABS_DETAILS_IMAGE_LOADING]: Date.now() });
+        }).catch(error => {
             console.error('oops, something went wrong!', error);
             saveImage(tabId, IMG_NO_IMAGE);
         });
     });
 }
 
-function remove(tabId) {
-    removeTabDetails(tabId);
-    updateCurrentCounterBadge()
+function retryManualImgCapture(details) {
+    return !isDefined(details[TABS_DETAILS_IMAGE]) &&
+        (!details[TABS_DETAILS_IMAGE_LOADING] || (Date.now() - details[TABS_DETAILS_IMAGE_LOADING]) > 10000);
 }
 
-function saveImage(tabId, image) {
-    if (image) {
-        console.debug("Got image for tab: " + tabId);
-        getTabDetails(tabId, (tabDetails) => {
-            console.debug("Save image for tab: " + tabId);
-            if (image === IMG_NO_IMAGE && tabDetails[TABS_DETAILS_IMGAGE]) {
-                image = tabDetails[TABS_DETAILS_IMGAGE];
-            }
-            updateTabDetails(tabId, {
-                [TABS_DETAILS_IMGAGE_LOADING]: false,
-                [TABS_DETAILS_IMGAGE]: image,
-            });
-        });
-        chrome.runtime.sendMessage({ 
-            cmd: CMD_UPDATE_IMAGE, 
-            tabId: tabId, 
-            img: image 
-        }).catch(function(lastError) {
-            console.debug("No one to get the message of: " + CMD_UPDATE_IMAGE, lastError);
-        });
-    }
-}
-
+// =====================
+// Tab CRUD
+// =====================
 function save(tabId) {
-    chrome.tabs.get(tabId).then(function(tab) {
-        saveTab(tab);
-    }).catch(function(lastError){
+    chrome.tabs.get(tabId).then(saveTab).catch(lastError => {
         console.debug("oops, error fetching tab ID: " + tabId, lastError);
     });
 }
@@ -161,106 +166,74 @@ function saveTab(tab) {
     });
 }
 
-function extractDomain(url) {
-    let domain;
-
-    if (!url) {
-        return "Other";
-    }
-
-    if (url.indexOf("chrome-extension://") > -1) {
-        url = url.split('chrome-extension://')[1];
-    }
-
-    //find & remove protocol (http, ftp, etc.) and get domain
-    domain = url;
-    if (domain.indexOf("://") > -1) {
-        domain = domain.split('://')[1];
-    }
-
-    if (domain.indexOf("/") > -1) {
-        domain = domain.split('/')[0];
-    }
-
-    //find & remove port number
-    domain = domain.split(':')[0];
-
-    return domain;
+function remove(tabId) {
+    removeTabDetails(tabId);
+    updateCurrentCounterBadge();
 }
 
+// =====================
+// Tab Indexing
+// =====================
 function indexTabs(tabs) {
-    for (let index = 0; index < tabs.length; index++) {
-        saveTab(tabs[index]);
-    }
+    tabs.forEach(saveTab);
 }
 
 function indexTabsImages(tabs) {
-    for (let index = 0; index < tabs.length; index++) {
-        indexTabImage(tabs[index].id);
-    }
+    tabs.forEach(tab => indexTabImage(tab.id));
 }
 
+// =====================
+// Badge Handling
+// =====================
 function updateCurrentCounterBadge() {
-    chrome.tabs.query({}, function(tabs) {
-        updateCounterBadge(tabs.length);
-    });
+    chrome.tabs.query({}, tabs => updateCounterBadge(tabs.length));
 }
 
 function updateCounterBadge(size) {
-    chrome.action.setBadgeText({ text: size + "" });
+    chrome.action.setBadgeText({ text: String(size) });
 }
 
-function retryManualImgCapture(details){
-    return !isDefined(details[TABS_DETAILS_IMGAGE])
-        && !details[TABS_DETAILS_IMGAGE_LOADING];
-}
-
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.cmd == CMD_RECORD_TAB_IMAGE) {
+// =====================
+// Event Listeners
+// =====================
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.cmd === CMD_RECORD_TAB_IMAGE) {
         save(sender.tab.id);
         saveImage(sender.tab.id, request.image);
-    } else if (request.cmd == CMD_GET_TABS_DETAILS) {
+    } else if (request.cmd === CMD_GET_TABS_DETAILS) {
         getTabsDetails(request.tabsIds, sendResponse);
-
-        // return true from the event listener to indicate you wish to send a response asynchronously
-        // (this will keep the message channel open to the other end until sendResponse is called).
-        return true;
+        return true; // keep message channel open for async response
     }
 });
 
-chrome.tabs.onActivated.addListener(function(activeInfo) {
-    getTabDetails(activeInfo.tabId, function(tabDetails){
-        capturePage(activeInfo.tabId);
-    });
+chrome.tabs.onActivated.addListener(activeInfo => {
+    getTabDetails(activeInfo.tabId, () => capturePage(activeInfo.tabId));
 });
 
-chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
     remove(tabId);
-    chrome.runtime.sendMessage({ 
-        cmd: CMD_REMOVE_TAB, 
-        tabId: tabId 
-    }).catch(function(lastError) {
+    chrome.runtime.sendMessage({
+        cmd: CMD_REMOVE_TAB,
+        tabId
+    }).catch(lastError => {
         console.debug("No one to get the message of: " + CMD_REMOVE_TAB, lastError);
     });
 });
 
-chrome.tabs.onMoved.addListener(function(tabId) {
-    save(tabId);
-});
+chrome.tabs.onMoved.addListener(tabId => save(tabId));
 
-chrome.tabs.onZoomChange.addListener(function(ZoomChangeInfo) {
-    capturePage(ZoomChangeInfo.tabId);
-});
+chrome.tabs.onZoomChange.addListener(zoomChangeInfo => capturePage(zoomChangeInfo.tabId));
 
-chrome.tabs.onCreated.addListener(function(tab) {
+chrome.tabs.onCreated.addListener(tab => {
     saveTab(tab);
     capturePage(tab.id);
     updateCurrentCounterBadge();
 });
 
-
-// Start Indexing tabs of all windows
-chrome.tabs.query({}, function(tabs) {
+// =====================
+// Initial Indexing
+// =====================
+chrome.tabs.query({}, tabs => {
     updateCounterBadge(tabs.length);
     indexTabs(tabs);
     indexTabsImages(tabs);

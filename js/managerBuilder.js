@@ -1,19 +1,22 @@
-var CMD_GET_TABS_DETAILS = "getTabs"
-var CMD_REMOVE_TAB = "removeTab"
-var CMD_UPDATE_IMAGE = "updateImage"
+const CMD_GET_TABS_DETAILS = "getTabs";
+const CMD_REMOVE_TAB = "removeTab";
+const CMD_UPDATE_IMAGE = "updateImage";
 
-var TABS_DETAILS_IMGAGE = "img"
-var TABS_DETAILS_TITLE = "title"
-var TABS_DETAILS_ICON = "icon"
-var TABS_DETAILS_URL = "url"
-var TABS_DETAILS_PINNED = "pinned"
-var TABS_DETAILS_WINDOW_ID = "window"
+const TABS_DETAILS_IMAGE = "img";
+const TABS_DETAILS_TITLE = "title";
+const TABS_DETAILS_ICON = "icon";
+const TABS_DETAILS_URL = "url";
+const TABS_DETAILS_PINNED = "pinned";
+const TABS_DETAILS_WINDOW_ID = "window";
 
-var IMG_LOADING_IMAGE = "img/loading-image.gif"
+const IMG_LOADING_IMAGE = "img/loading-image.gif";
 
-var lastSearch = "";
-var thumbnail_size = ""
+let lastSearch = "";
+let thumbnailSize = "";
 
+// =====================
+// Initialization
+// =====================
 function load() {
     loadOptions();
     buildWindowTabs();
@@ -21,46 +24,38 @@ function load() {
 }
 
 function loadOptions() {
-    chrome.storage.sync.get({
-        favoriteThumbnailSize: 'medium-thumbnail',
-    }, function(items) {
-        thumbnail_size = items.favoriteThumbnailSize;
+    chrome.storage.sync.get({ favoriteThumbnailSize: 'medium-thumbnail' }, items => {
+        thumbnailSize = items.favoriteThumbnailSize;
     });
 }
 
 function buildWindowTabs() {
-    chrome.tabs.query({}, function(tabs) {
-        let tabsIds = [];
-        for (let i = 0; i < tabs.length; i++) {
-            tabsIds[i] = tabs[i].id;
-        }
-        retrieveTabsDetails(tabsIds);
+    chrome.tabs.query({}, tabs => {
+        const tabIds = tabs.map(tab => tab.id);
+        retrieveTabsDetails(tabIds);
     });
 }
 
-function retrieveTabsDetails(tabsIds) {
-    chrome.runtime.sendMessage({ cmd: CMD_GET_TABS_DETAILS, tabsIds: tabsIds }, function(tabsDetails) {
-        if (Object.keys(tabsDetails).length != tabsIds.length) {
+function retrieveTabsDetails(tabIds) {
+    chrome.runtime.sendMessage({ cmd: CMD_GET_TABS_DETAILS, tabsIds: tabIds }, tabsDetails => {
+        if (Object.keys(tabsDetails).length !== tabIds.length) {
             $("#indexing").show();
         }
-        if ($("#filter").val()) {
-            var index = lunr(function() {
+        const filterVal = $("#filter").val();
+        if (filterVal) {
+            const index = lunr(function() {
                 this.field('url', { boost: 10 });
                 this.field('title', { boost: 5 });
                 this.ref('id');
             });
-            for (let i in tabsDetails) {
-                let tab = tabsDetails[i];
-                index.add({
-                    id: i,
-                    title: tab[TABS_DETAILS_TITLE],
-                    url: tab[TABS_DETAILS_URL]
-                });
+            for (const i in tabsDetails) {
+                const tab = tabsDetails[i];
+                index.add({ id: i, title: tab[TABS_DETAILS_TITLE], url: tab[TABS_DETAILS_URL] });
             }
-            let filteredTabs = index.search($("#filter").val());
-            let toBeRemoved = Object.keys(tabsDetails).filter(n => !filteredTabs.map(k => k.ref).includes(n));
-            for (let i in toBeRemoved) {
-                delete tabsDetails[toBeRemoved[i]];
+            const filteredTabs = index.search(filterVal);
+            const toBeRemoved = Object.keys(tabsDetails).filter(n => !filteredTabs.map(k => k.ref).includes(n));
+            for (const i of toBeRemoved) {
+                delete tabsDetails[i];
             }
         }
         loadTabs(tabsDetails);
@@ -68,196 +63,149 @@ function retrieveTabsDetails(tabsIds) {
 }
 
 function loadTabs(tabsDetails) {
-    getCurrentWindow(function(w) {
+    getCurrentWindow(w => {
         document.getElementById('tabsList').innerHTML = buildTabs(tabsDetails, w.id);
         addEvents();
         $("#filter").focus();
     });
 }
 
-function buildTabs(tabsdDetails, currentWindowId) {
-    let tabsGroups = groupTabs(tabsdDetails);
-    let sortedGroups = sortGroups(tabsGroups);
-
-    let windowIdMpping = getWindowIdMapping(tabsdDetails, currentWindowId);
-    let windowsCount = Object.keys(windowIdMpping).length;
-
+function buildTabs(tabsDetails, currentWindowId) {
+    const tabsGroups = groupTabs(tabsDetails);
+    const sortedGroups = sortGroups(tabsGroups);
+    const windowIdMapping = getWindowIdMapping(tabsDetails, currentWindowId);
+    const windowsCount = Object.keys(windowIdMapping).length;
     let windowId;
-    for (let i in tabsdDetails)
-        windowId = tabsdDetails[i][TABS_DETAILS_WINDOW_ID];
-
+    for (const i in tabsDetails) windowId = tabsDetails[i][TABS_DETAILS_WINDOW_ID];
     let tabsList = "";
-    for (let i in sortedGroups) {
-        let group = sortedGroups[i];
-        if (!tabsGroups[group])
-            continue;
-
-        let groupTabsDetails = tabsGroups[group];
+    for (const group of sortedGroups) {
+        if (!tabsGroups[group]) continue;
+        const groupTabsDetails = tabsGroups[group];
         let groupIcon = getGroupIcon(group, groupTabsDetails);
-
         let classTag = "";
         let isOthersGroup = false;
-        if (group == "others") {
+        let groupName = group;
+        if (group === "others") {
             isOthersGroup = true;
             classTag = "important-header";
-            group = "Tabs from different domains";
-        } else if (group == "pinned") {
+            groupName = "Tabs from different domains";
+        } else if (group === "pinned") {
             isOthersGroup = true;
             classTag = "important-header";
-            group = "Pinned Tabs";
+            groupName = "Pinned Tabs";
         }
-
-        let groupWindows = {};
-        for (let i in groupTabsDetails) {
+        const groupWindows = {};
+        for (const i in groupTabsDetails) {
             groupWindows[groupTabsDetails[i][TABS_DETAILS_WINDOW_ID]] = 1;
         }
-        let groupWindowsCount = Object.keys(groupWindows).length;
-
-        let groupSection = '<div class="card">' +
-            '<div class="card-header ' + classTag + '"><img src="' + groupIcon + '" class="groupIcon">' + group;
-        if (groupWindowsCount == 1 && windowsCount > 1)
-            groupSection += getWindowBadge(windowId, windowIdMpping[Object.keys(groupWindows)[0]]);
-        groupSection += '<a title="Close Group" class="closeGroup"><span class="fa fa-trash-o" ></span></a>' +
-            '</div>' +
-            '<div class="card-body">' +
-            buildGroupTabs(groupTabsDetails, windowIdMpping, groupWindowsCount, isOthersGroup) +
-            '</div>' +
-            '</div>';
+        const groupWindowsCount = Object.keys(groupWindows).length;
+        let groupSection = `<div class="card">
+            <div class="card-header ${classTag}"><img src="${groupIcon}" class="groupIcon">${groupName}`;
+        if (groupWindowsCount === 1 && windowsCount > 1)
+            groupSection += getWindowBadge(windowId, windowIdMapping[Object.keys(groupWindows)[0]]);
+        groupSection += `<a title="Close Group" class="closeGroup"><span class="fa fa-trash-o"></span></a></div>
+            <div class="card-body">${buildGroupTabs(groupTabsDetails, windowIdMapping, groupWindowsCount, isOthersGroup)}</div></div>`;
         tabsList += groupSection;
     }
-
     return tabsList;
 }
 
-function getWindowIdMapping(tabsdDetails, currentWindowId) {
-    let windowIdMpping = {};
-    windowIdMpping[currentWindowId] = 1;
+function getWindowIdMapping(tabsDetails, currentWindowId) {
+    const windowIdMapping = { [currentWindowId]: 1 };
     let windowsIndex = 2;
-    for (let i in tabsdDetails) {
-        let windowId = tabsdDetails[i][TABS_DETAILS_WINDOW_ID];
-        if (!windowIdMpping[windowId]) {
-            windowIdMpping[windowId] = windowsIndex++;
+    for (const i in tabsDetails) {
+        const windowId = tabsDetails[i][TABS_DETAILS_WINDOW_ID];
+        if (!windowIdMapping[windowId]) {
+            windowIdMapping[windowId] = windowsIndex++;
         }
     }
-    return windowIdMpping;
+    return windowIdMapping;
 }
 
-function buildGroupTabs(groupTabsDetails, windowIdMpping, windowsCount, isOthersGroup) {
+function buildGroupTabs(groupTabsDetails, windowIdMapping, windowsCount, isOthersGroup) {
     let groupSection = "";
-    for (let tabId in groupTabsDetails) {
-        let tabDetails = groupTabsDetails[tabId];
+    for (const tabId in groupTabsDetails) {
+        const tabDetails = groupTabsDetails[tabId];
         if (tabDetails[TABS_DETAILS_TITLE]) {
-            let img = getImage(tabDetails[TABS_DETAILS_IMGAGE]);
-            let title = tabDetails[TABS_DETAILS_TITLE];
-            let url = tabDetails[TABS_DETAILS_URL];
-            let icon = tabDetails[TABS_DETAILS_ICON];
-            let windowId = tabDetails[TABS_DETAILS_WINDOW_ID];
-            if (thumbnail_size == "")
-                thumbnail_size = "medium-thumbnail";
-            groupSection += '<div class="card item ' + thumbnail_size + '" id="' + tabId + '">' +
-                '<div class="card-body card" tabId="' + tabId + '" windowId="' + windowId + '">';
+            const img = getImage(tabDetails[TABS_DETAILS_IMAGE]);
+            const title = tabDetails[TABS_DETAILS_TITLE];
+            const url = tabDetails[TABS_DETAILS_URL];
+            const icon = tabDetails[TABS_DETAILS_ICON];
+            const windowId = tabDetails[TABS_DETAILS_WINDOW_ID];
+            if (!thumbnailSize) thumbnailSize = "medium-thumbnail";
+            groupSection += `<div class="card item ${thumbnailSize}" id="${tabId}">
+                <div class="card-body card" tabId="${tabId}" windowId="${windowId}">`;
             if (windowsCount > 1) {
-                groupSection += getWindowBadge(windowId, windowIdMpping[windowId]);
+                groupSection += getWindowBadge(windowId, windowIdMapping[windowId]);
             }
-            groupSection += '<a class="thumbnailImg tab" href="#" >' +
-                '<img src="' + img + '" />' +
-                '</a>' +
-                '</div>' +
-                '<div class="card-footer">' +
-                '<div class="title-section">';
+            groupSection += `<a class="thumbnailImg tab" href="#"><img src="${img}" /></a></div>
+                <div class="card-footer"><div class="title-section">`;
             if (isOthersGroup) {
-                groupSection += '<img src="' + icon + '" class="groupIcon">';
+                groupSection += `<img src="${icon}" class="groupIcon">`;
             }
-            groupSection += '<span title="' + title + '">' + title + '</span>' +
-                '</div>' +
-                '<div class="control-section">' +
-                '<a tabId="' + tabId + '" windowId="' + windowId + '" title="Close" class="closeTab"><span class="fa fa-trash-o" ></span></a>' +
-                '<a class="zoomTab" title="Zoom In" href="' + img + '" data-lighter><span class="fa fa-arrows-alt" ></span></a>' +
-                '</div>' +
-                '</div>' +
-                '</div>';
+            groupSection += `<span title="${title}">${title}</span></div>
+                <div class="control-section">
+                    <a tabId="${tabId}" windowId="${windowId}" title="Close" class="closeTab"><span class="fa fa-trash-o"></span></a>
+                    <a class="zoomTab" title="Zoom In" href="${img}" data-lighter><span class="fa fa-arrows-alt"></span></a>
+                </div></div></div>`;
         }
     }
     return groupSection;
 }
 
 function getWindowBadge(windowId, windowMapping) {
-    let ele = '<span class="badge badge-warning window-badge" windowId="' + windowId + '">';
-    if (windowMapping == 1)
-        ele += 'Current Window';
-    else
-        ele += 'Window #' + windowMapping;
+    let ele = `<span class="badge badge-warning window-badge" windowId="${windowId}">`;
+    ele += windowMapping === 1 ? 'Current Window' : `Window #${windowMapping}`;
     ele += '</span>';
     return ele;
 }
 
-function groupTabs(tabsdDetails) {
-    let tabsGroups = {};
-    let pinnedGroup = {};
-    for (let tabId in tabsdDetails) {
-        let tabDetails = tabsdDetails[tabId];
+function groupTabs(tabsDetails) {
+    const tabsGroups = {};
+    const pinnedGroup = {};
+    for (const tabId in tabsDetails) {
+        const tabDetails = tabsDetails[tabId];
         if (tabDetails[TABS_DETAILS_PINNED]) {
             pinnedGroup[tabId] = tabDetails;
         } else if (tabsGroups[tabDetails[TABS_DETAILS_URL]]) {
             tabsGroups[tabDetails[TABS_DETAILS_URL]][tabId] = tabDetails;
         } else {
-            let list = {};
-            list[tabId] = tabDetails;
-            tabsGroups[tabDetails[TABS_DETAILS_URL]] = list;
+            tabsGroups[tabDetails[TABS_DETAILS_URL]] = { [tabId]: tabDetails };
         }
     }
-
-    let othersGroup = {};
-    for (let group in tabsGroups) {
-        if (Object.keys(tabsGroups[group]).length == 1) {
-            let groupTabs = tabsGroups[group];
-            for (let tabId in groupTabs) {
-                othersGroup[tabId] = groupTabs[tabId];
-            }
+    const othersGroup = {};
+    for (const group in tabsGroups) {
+        if (Object.keys(tabsGroups[group]).length === 1) {
+            Object.assign(othersGroup, tabsGroups[group]);
             delete tabsGroups[group];
         }
     }
-
-    if (Object.keys(pinnedGroup).length > 0)
-        tabsGroups["pinned"] = pinnedGroup;
-
-    if (Object.keys(othersGroup).length > 0)
-        tabsGroups["others"] = othersGroup;
-
+    if (Object.keys(pinnedGroup).length > 0) tabsGroups["pinned"] = pinnedGroup;
+    if (Object.keys(othersGroup).length > 0) tabsGroups["others"] = othersGroup;
     return tabsGroups;
 }
 
 function sortGroups(groups) {
-    let keys = []
-    for (k in groups) {
-        if (k != "others" && k != "pinned" && groups.hasOwnProperty(k)) {
-            keys.push(k);
-        }
-    }
-    let sortedGroups = keys.sort();
+    const keys = Object.keys(groups).filter(k => k !== "others" && k !== "pinned");
+    const sortedGroups = keys.sort();
     sortedGroups.push("others");
     sortedGroups.unshift("pinned");
     return sortedGroups;
 }
 
 function getGroupIcon(groupName, groupTabsDetails) {
-    let icon = "img/other.ico";
-    if (groupName == "others")
-        return icon;
-    else if (groupName == "pinned")
-        return "img/pin.png";
-    else
-        for (var tabId in groupTabsDetails)
-            if (groupTabsDetails[tabId][TABS_DETAILS_ICON]) {
-                icon = groupTabsDetails[tabId][TABS_DETAILS_ICON];
-            }
-    return icon;
+    if (groupName === "others") return "img/other.ico";
+    if (groupName === "pinned") return "img/pin.png";
+    for (const tabId in groupTabsDetails) {
+        if (groupTabsDetails[tabId][TABS_DETAILS_ICON]) {
+            return groupTabsDetails[tabId][TABS_DETAILS_ICON];
+        }
+    }
+    return "img/other.ico";
 }
 
 function getImage(img) {
-    if (!img || img == "NoImage")
-        img = IMG_LOADING_IMAGE;
-    return img;
+    return (!img || img === "NoImage") ? IMG_LOADING_IMAGE : img;
 }
 
 

@@ -1,3 +1,35 @@
+
 #status {
     display: none;
+    color: #388e3c;
+    background: #e8f5e9;
+    border-radius: 4px;
+    padding: 4px 10px;
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: center;
+    transition: opacity 0.3s;
+}
+
+#save {
+    margin-top: 10px;
+    padding: 6px 16px;
+    background: #1976d2;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+#save:hover {
+    background: #1565c0;
+}
+
+#thumbnail-size {
+    margin: 10px 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #bdbdbd;
+    font-size: 14px;
 }

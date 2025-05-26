@@ -36,7 +36,9 @@ function setTabDetails(tabId, tabDetails) {
 function getTabsDetails(tabIds, callback) {
     let keys = [];
     tabIds.forEach((tabId, i) => {
-        keys.push(tabId.toString());
+        if (tabId) {
+            keys.push(tabId.toString());
+        }
     });
     return chrome.storage.local.get(keys).then(function(details){
         keys.forEach((key, j) => {
@@ -49,7 +51,9 @@ function getTabsDetails(tabIds, callback) {
 
 function getTabDetails(tabId, callback) {
     return getTabsDetails([tabId], (tabsDetails) => {
-        callback(tabsDetails[tabId.toString()]);
+        if(tabId) {
+            callback(tabsDetails[tabId.toString()]);
+        }
     });
 }
 
@@ -106,10 +110,7 @@ function indexTabImage(tabId){
             updateTabDetails(tabId, {[TABS_DETAILS_IMGAGE_LOADING]: true});
         }).catch(function (error) {
             console.error('oops, something went wrong!', error);
-            updateTabDetails(tabId, {
-                [TABS_DETAILS_IMGAGE_LOADING]: false,
-                [TABS_DETAILS_IMGAGE]: IMG_NO_IMAGE
-            });
+            saveImage(tabId, IMG_NO_IMAGE);
         });
     });
 }
@@ -124,7 +125,13 @@ function saveImage(tabId, image) {
         console.debug("Got image for tab: " + tabId);
         getTabDetails(tabId, (tabDetails) => {
             console.debug("Save image for tab: " + tabId);
-            updateTabDetails(tabId, {[TABS_DETAILS_IMGAGE]: image});
+            if (image === IMG_NO_IMAGE && tabDetails[TABS_DETAILS_IMGAGE]) {
+                image = tabDetails[TABS_DETAILS_IMGAGE];
+            }
+            updateTabDetails(tabId, {
+                [TABS_DETAILS_IMGAGE_LOADING]: false,
+                [TABS_DETAILS_IMGAGE]: image,
+            });
         });
         chrome.runtime.sendMessage({ 
             cmd: CMD_UPDATE_IMAGE, 
@@ -244,6 +251,13 @@ chrome.tabs.onMoved.addListener(function(tabId) {
 chrome.tabs.onZoomChange.addListener(function(ZoomChangeInfo) {
     capturePage(ZoomChangeInfo.tabId);
 });
+
+chrome.tabs.onCreated.addListener(function(tab) {
+    saveTab(tab);
+    capturePage(tab.id);
+    updateCurrentCounterBadge();
+});
+
 
 // Start Indexing tabs of all windows
 chrome.tabs.query({}, function(tabs) {

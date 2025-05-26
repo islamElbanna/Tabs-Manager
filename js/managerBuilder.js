@@ -349,7 +349,7 @@ function addGlobalEvents() {
         if (request.cmd == CMD_UPDATE_IMAGE) {
             let tabId = request.tabId;
             let img = request.img;
-            if (img && img != "NoImage") {
+            if (img) {
                 $("#" + tabId).find(".thumbnailImg").each(function() {
                     $(this).find("img").each(function() {
                         $(this).attr("src", img);

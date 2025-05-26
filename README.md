@@ -1,24 +1,45 @@
-# Tabs-Manager
-Manage Chrome tabs with thumbnails and search
+# Tabs Manager
 
-Tabs Manager offers a comprehensive view of all your opened tabs across various windows. It features a thumbnail view, search functionality, and tab management capabilities.Key Features:
-- Thumbnails of all open tabs with titles (automatically captured).
-- Thumbnail zoom preview for closer inspection.
-- Grouping of tabs by domain name for easy organization.
-- Quick navigation to a specific tab or closing of a tab/group of tabs with a single click.
-- Powerful search with title and URL filters.
+Tabs Manager is a powerful Chrome extension that helps you efficiently manage your browser tabs with visual thumbnails, advanced search, and intuitive tab organization. 
 
-## Supported Features:
-- Thumbnails of all open tabs with titles.
-- Thumbnail zoom preview.
-- Grouping of tabs by domain name.
-- Multi-window support to manage tabs across different browser windows.
-- Ability to close individual tabs or groups of tabs.
-- Keyboard shortcuts for fast searching.
+## Features
+- **Visual Thumbnails:** See live thumbnails of all your open tabs, updated automatically.
+- **Zoom Preview:** Hover over a thumbnail to see a larger preview.
+- **Group by Domain:** Tabs are automatically grouped by domain for easy navigation.
+- **Multi-Window Support:** Manage tabs across all open Chrome windows.
+- **Quick Actions:** Instantly switch to, close, or zoom into any tab or group of tabs with a single click.
+- **Powerful Search:** Filter tabs by title or URL using the search bar.
+- **Keyboard Shortcuts:** Quickly search and navigate tabs without leaving the keyboard.
+- **Customizable Thumbnails:** Choose your preferred thumbnail size in the options page.
 
-# Contribution:
-To contribute to Tabs Manager, follow these steps:
-- Create an issue on the project's GitHub repository. Clearly explain the problem you've identified and suggest a solution if possible.
-- Create a pull request with your changes and mention the issue ID in the description.
+## Getting Started
+1. **Install the Extension:**
+   - Download or clone this repository.
+   - Load it as an unpacked extension in Chrome via `chrome://extensions` > "Load unpacked".
+2. **Open Tabs Manager:**
+   - Click the Tabs Manager icon in your Chrome toolbar.
+3. **Configure Options:**
+   - Click the settings (cog) icon to choose your preferred thumbnail size.
 
-By participating in the development of Tabs Manager, you can help improve its capabilities and make it even more useful for users.
+## Usage
+- **Filter Tabs:** Use the search bar to filter tabs by title or URL.
+- **Zoom Preview:** Hover over a tab thumbnail and click the zoom icon to enlarge.
+- **Close Tabs:** Click the trash icon to close individual tabs or entire groups.
+- **Switch Tabs:** Click a tab thumbnail to instantly switch to that tab.
+
+## Contributing
+We welcome contributions! To contribute:
+1. [Open an issue](https://github.com/islamElbanna/Tabs-Manager/issues) describing your suggestion or bug.
+2. Fork the repository and create a new branch for your feature or fix.
+3. Submit a pull request referencing the issue number.
+
+Please follow best practices and ensure your code is well-documented.
+
+## License
+Tabs Manager is licensed under the [Apache License 2.0](LICENSE).
+
+---
+
+**Feedback & Support:**
+- Email: [tabsmanagers@gmail.com](mailto:tabsmanagers@gmail.com?Subject=Feedback)
+- [GitHub Repository](https://github.com/islamElbanna/Tabs-Manager)

@@ -20,7 +20,7 @@ const MAX_IMG_RETRIES = 3;
 // =====================
 // Utility Functions
 // =====================
-const isDefined = v => typeof v !== 'undefined' && v !== NaN;
+const isDefined = v => typeof v !== 'undefined' && !Number.isNaN(v);
 
 const extractDomain = url => {
     if (!url) return "Other";

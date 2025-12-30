@@ -14,6 +14,16 @@ const IMG_LOADING_IMAGE = "img/loading-image.gif";
 let lastSearch = "";
 let thumbnailSize = "";
 
+const escapeHtml = (unsafe) => {
+    if (!unsafe) return "";
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
+
 // =====================
 // Initialization
 // =====================
@@ -100,7 +110,7 @@ function buildTabs(tabsDetails, currentWindowId) {
         }
         const groupWindowsCount = Object.keys(groupWindows).length;
         let groupSection = `<div class="card">
-            <div class="card-header ${classTag}"><img src="${groupIcon}" class="groupIcon">${groupName}`;
+            <div class="card-header ${classTag}"><img src="${groupIcon}" class="groupIcon">${escapeHtml(groupName)}`;
         if (groupWindowsCount === 1 && windowsCount > 1)
             groupSection += getWindowBadge(windowId, windowIdMapping[Object.keys(groupWindows)[0]]);
         groupSection += `<a title="Close Group" class="closeGroup"><span class="fa fa-trash-o"></span></a></div>
@@ -128,8 +138,8 @@ function buildGroupTabs(groupTabsDetails, windowIdMapping, windowsCount, isOther
         const tabDetails = groupTabsDetails[tabId];
         if (tabDetails[TABS_DETAILS_TITLE]) {
             const img = getImage(tabDetails[TABS_DETAILS_IMAGE]);
-            const title = tabDetails[TABS_DETAILS_TITLE];
-            const url = tabDetails[TABS_DETAILS_URL];
+            const title = escapeHtml(tabDetails[TABS_DETAILS_TITLE]);
+            const url = escapeHtml(tabDetails[TABS_DETAILS_URL]);
             const icon = tabDetails[TABS_DETAILS_ICON];
             const windowId = tabDetails[TABS_DETAILS_WINDOW_ID];
             if (!thumbnailSize) thumbnailSize = "medium-thumbnail";

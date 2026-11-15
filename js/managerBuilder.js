@@ -13,6 +13,7 @@ const IMG_LOADING_IMAGE = "img/loading-image.gif";
 
 let lastSearch = "";
 let thumbnailSize = "";
+let filterDebounceTimer = null;
 
 const escapeHtml = (unsafe) => {
     if (!unsafe) return "";
@@ -28,14 +29,16 @@ const escapeHtml = (unsafe) => {
 // Initialization
 // =====================
 function load() {
-    loadOptions();
-    buildWindowTabs();
+    loadOptions(() => {
+        buildWindowTabs();
+    });
     addGlobalEvents();
 }
 
-function loadOptions() {
+function loadOptions(callback) {
     chrome.storage.sync.get({ favoriteThumbnailSize: 'medium-thumbnail' }, items => {
         thumbnailSize = items.favoriteThumbnailSize;
+        if (callback) callback();
     });
 }
 
@@ -85,8 +88,6 @@ function buildTabs(tabsDetails, currentWindowId) {
     const sortedGroups = sortGroups(tabsGroups);
     const windowIdMapping = getWindowIdMapping(tabsDetails, currentWindowId);
     const windowsCount = Object.keys(windowIdMapping).length;
-    let windowId;
-    for (const i in tabsDetails) windowId = tabsDetails[i][TABS_DETAILS_WINDOW_ID];
     let tabsList = "";
     for (const group of sortedGroups) {
         if (!tabsGroups[group]) continue;
@@ -110,9 +111,9 @@ function buildTabs(tabsDetails, currentWindowId) {
         }
         const groupWindowsCount = Object.keys(groupWindows).length;
         let groupSection = `<div class="card">
-            <div class="card-header ${classTag}"><img src="${groupIcon}" class="groupIcon">${escapeHtml(groupName)}`;
+            <div class="card-header ${classTag}"><img src="${escapeHtml(groupIcon)}" class="groupIcon">${escapeHtml(groupName)}`;
         if (groupWindowsCount === 1 && windowsCount > 1)
-            groupSection += getWindowBadge(windowId, windowIdMapping[Object.keys(groupWindows)[0]]);
+            groupSection += getWindowBadge(Object.keys(groupWindows)[0], windowIdMapping[Object.keys(groupWindows)[0]]);
         groupSection += `<a title="Close Group" class="closeGroup"><span class="fa fa-trash-o"></span></a></div>
             <div class="card-body">${buildGroupTabs(groupTabsDetails, windowIdMapping, groupWindowsCount, isOthersGroup)}</div></div>`;
         tabsList += groupSection;
@@ -140,7 +141,7 @@ function buildGroupTabs(groupTabsDetails, windowIdMapping, windowsCount, isOther
             const img = getImage(tabDetails[TABS_DETAILS_IMAGE]);
             const title = escapeHtml(tabDetails[TABS_DETAILS_TITLE]);
             const url = escapeHtml(tabDetails[TABS_DETAILS_URL]);
-            const icon = tabDetails[TABS_DETAILS_ICON];
+            const icon = escapeHtml(tabDetails[TABS_DETAILS_ICON]);
             const windowId = tabDetails[TABS_DETAILS_WINDOW_ID];
             if (!thumbnailSize) thumbnailSize = "medium-thumbnail";
             groupSection += `<div class="card item ${thumbnailSize}" id="${tabId}">
@@ -198,8 +199,8 @@ function groupTabs(tabsDetails) {
 function sortGroups(groups) {
     const keys = Object.keys(groups).filter(k => k !== "others" && k !== "pinned");
     const sortedGroups = keys.sort();
-    sortedGroups.push("others");
-    sortedGroups.unshift("pinned");
+    if (groups["others"]) sortedGroups.push("others");
+    if (groups["pinned"]) sortedGroups.unshift("pinned");
     return sortedGroups;
 }
 
@@ -230,17 +231,17 @@ function addEvents() {
     $('.item').hover(function() {
 
         //Set the width and height according to the zoom percentage
-        width = $('.item').width() * zoom;
-        height = $('.item').height() * zoom;
+        const width = $('.item').width() * zoom;
+        const height = $('.item').height() * zoom;
 
         //Move and zoom the image
-        $(this).find('.thumbnail img').stop(false, true).animate({ 'width': width, 'height': height, 'top': move, 'left': move }, { duration: 200 });
+        $(this).find('.thumbnailImg img').stop(false, true).animate({ 'width': width, 'height': height, 'top': move, 'left': move }, { duration: 200 });
 
         //Display the caption
         $(this).find('div.caption').stop(false, true).fadeIn(200);
     }, function() {
         //Reset the image
-        $(this).find('.thumbnail img').stop(false, true).animate({ 'width': $('.item').width(), 'height': $('.item').height(), 'top': '0', 'left': '0' }, { duration: 100 });
+        $(this).find('.thumbnailImg img').stop(false, true).animate({ 'width': $('.item').width(), 'height': $('.item').height(), 'top': '0', 'left': '0' }, { duration: 100 });
 
         //Hide the caption
         $(this).find('div.caption').stop(false, true).fadeOut(200);
@@ -281,7 +282,10 @@ function addEvents() {
     $("#filter").bind("keyup", function() {
         if (lastSearch != $("#filter").val()) {
             lastSearch = $("#filter").val();
-            load();
+            clearTimeout(filterDebounceTimer);
+            filterDebounceTimer = setTimeout(() => {
+                buildWindowTabs();
+            }, 250);
         }
     });
 }

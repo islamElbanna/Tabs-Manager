@@ -65,7 +65,7 @@ if (!window.tabsManagerCaptureRunning) {
             captureTabImage();
         } else {
             console.log('Document is not complete, waiting for load event');
-            window.addEventListener('load', scheduleCapture);
+            window.addEventListener('load', scheduleCapture, { once: true });
         }
     }
 

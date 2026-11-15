@@ -388,8 +388,10 @@ h6 {
     padding-bottom: 20px;
 }
 
-@media (min-width: 768px) .container {
-    width: 775pxs;
+@media (min-width: 768px) {
+    .container {
+        width: 775px;
+    }
 }
 
 .card-heading {

@@ -60,15 +60,34 @@ function retrieveTabsDetails(tabIds) {
                 this.field('url', { boost: 10 });
                 this.field('title', { boost: 5 });
                 this.ref('id');
+                for (const i in tabsDetails) {
+                    const tab = tabsDetails[i];
+                    this.add({ id: i, title: tab[TABS_DETAILS_TITLE] || '', url: tab[TABS_DETAILS_URL] || '' });
+                }
             });
-            for (const i in tabsDetails) {
-                const tab = tabsDetails[i];
-                index.add({ id: i, title: tab[TABS_DETAILS_TITLE], url: tab[TABS_DETAILS_URL] });
+
+            let filteredTabs = [];
+            try {
+                const tokens = filterVal.trim().split(/\s+/).filter(Boolean);
+                filteredTabs = index.query(function(q) {
+                    tokens.forEach(token => {
+                        q.term(token, { boost: 10 });
+                        q.term(token, { wildcard: lunr.Query.wildcard.TRAILING, boost: 1 });
+                    });
+                });
+            } catch (e) {
+                try {
+                    filteredTabs = index.search(filterVal);
+                } catch (_) {
+                    filteredTabs = [];
+                }
             }
-            const filteredTabs = index.search(filterVal);
-            const toBeRemoved = Object.keys(tabsDetails).filter(n => !filteredTabs.map(k => k.ref).includes(n));
-            for (const i of toBeRemoved) {
-                delete tabsDetails[i];
+
+            const matchedRefs = new Set(filteredTabs.map(k => k.ref));
+            for (const i of Object.keys(tabsDetails)) {
+                if (!matchedRefs.has(i)) {
+                    delete tabsDetails[i];
+                }
             }
         }
         loadTabs(tabsDetails);

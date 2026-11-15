@@ -41,7 +41,9 @@ const extractDomain = url => {
 // Tab Details Storage
 // =====================
 function setTabDetails(tabId, tabDetails) {
-    chrome.storage.local.set({ [tabId.toString()]: tabDetails });
+    chrome.storage.local.set({ [tabId.toString()]: tabDetails }).catch(error => {
+        console.error('Failed to save tab details for tab ' + tabId + ':', error);
+    });
 }
 
 function getTabsDetails(tabIds, callback) {
@@ -72,12 +74,23 @@ function removeTabDetails(tabId) {
 
 function cleanTabDetails() {
     chrome.storage.local.get(null, details => {
-        Object.keys(details).forEach(tabId => {
-            if (tabId) {
-                const id = parseInt(tabId);
-                chrome.tabs.get(id).catch(lastError => {
-                    console.debug("Tab Id not found: " + tabId, lastError);
-                    removeTabDetails(id);
+        const keysToRemove = [];
+        const checks = Object.keys(details).map(tabId => {
+            if (!tabId) return Promise.resolve();
+            const id = parseInt(tabId);
+            if (isNaN(id)) {
+                // Not a tab ID key, skip
+                return Promise.resolve();
+            }
+            return chrome.tabs.get(id).catch(lastError => {
+                console.debug("Tab Id not found: " + tabId, lastError);
+                keysToRemove.push(tabId);
+            });
+        });
+        Promise.all(checks).then(() => {
+            if (keysToRemove.length > 0) {
+                chrome.storage.local.remove(keysToRemove).then(() => {
+                    console.debug("Cleaned up " + keysToRemove.length + " stale tab entries");
                 });
             }
         });
@@ -110,18 +123,22 @@ function saveImage(tabId, image) {
 
 function capturePage(tabId) {
     console.debug('Capture Visible Tab; ' + tabId);
-    chrome.tabs.captureVisibleTab({
-        quality: 1,
-        format: "jpeg"
-    }).then(screenshotUrl => {
-        chrome.tabs.query({ active: true }, tabs => {
-            if (tabs[0].id === tabId) {
-                saveImage(tabId, screenshotUrl);
-            }
+    chrome.tabs.get(tabId).then(tab => {
+        chrome.tabs.captureVisibleTab(tab.windowId, {
+            quality: 1,
+            format: "jpeg"
+        }).then(screenshotUrl => {
+            chrome.tabs.query({ active: true, windowId: tab.windowId }, tabs => {
+                if (tabs.length > 0 && tabs[0].id === tabId) {
+                    saveImage(tabId, screenshotUrl);
+                }
+            });
+        }).catch(lastError => {
+            console.debug('oops, something went wrong!', lastError);
+            indexTabImage(tabId);
         });
     }).catch(lastError => {
-        console.debug('oops, something went wrong!', lastError);
-        indexTabImage(tabId);
+        console.debug('oops, tab not found for capture: ' + tabId, lastError);
     });
 }
 
@@ -143,7 +160,8 @@ function indexTabImage(tabId) {
 }
 
 function retryManualImgCapture(details) {
-    return !isDefined(details[TABS_DETAILS_IMAGE]) &&
+    const hasRealImage = details[TABS_DETAILS_IMAGE] && details[TABS_DETAILS_IMAGE] !== IMG_NO_IMAGE;
+    return !hasRealImage &&
         (!details[TABS_DETAILS_IMAGE_LOADING] || (Date.now() - details[TABS_DETAILS_IMAGE_LOADING]) > 10000);
 }
 

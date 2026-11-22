@@ -544,3 +544,13 @@ a {
 .window-badge {
     cursor: pointer;
 }
+/* Fix unwanted hover zoom on thumbnail images */
+.item:hover .thumbnailImg img {
+  transform: none !important;
+}
+
+/* Ensure footer action icons stay above other elements */
+.footer-actions {
+  position: relative;
+  z-index: 10;
+}

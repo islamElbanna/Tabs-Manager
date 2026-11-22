@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Tabs Manager",
-    "version": "3.1",
+    "version": "3.2",
     "description": "Quickly view, search, and manage all your open tabs with thumbnails and grouping across windows.",
     "options_page": "options.html",
     "background": {
